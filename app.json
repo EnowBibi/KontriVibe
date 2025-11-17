@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "project02",
-    "slug": "project02",
+    "name": "KontriVibe",
+    "slug": "kontrivibe",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -38,7 +38,8 @@
             "backgroundColor": "#000000"
           }
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true,
