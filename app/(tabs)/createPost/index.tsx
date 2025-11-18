@@ -10,7 +10,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
-  Alert,
   ImageBackground,
   ScrollView,
   StyleSheet,
@@ -30,6 +29,9 @@ const CreateProjectsScreen = () => {
    | @return   --
    ----------------------------------------------------------------------------------------------------*/
   const handleUploadMusic = () => {
+    router.replace({
+      pathname: ROUTES.UPLOAD_SONG,
+    });
     setSelectedOption("upload");
   };
 
@@ -53,7 +55,9 @@ const CreateProjectsScreen = () => {
    | @return   --
    ----------------------------------------------------------------------------------------------------*/
   const handleMakePost = () => {
-    Alert.alert("Make Post", "Navigate to post creation screen");
+    router.replace({
+      pathname: ROUTES.POST,
+    });
     setSelectedOption("post");
   };
 

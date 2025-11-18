@@ -1,8 +1,11 @@
 import LyricsResultCard from "@/components/LyricsResultCard";
 import OptionSelector from "@/components/OptionSelector";
 import BASE_URL from "@/config/api";
+import { ROUTES } from "@/constants/navigation";
 import styles from "@/styles/lyricsGenerator.styles";
+import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { router } from "expo-router";
 import React, { useCallback, useState } from "react";
 import {
   ActivityIndicator,
@@ -78,6 +81,7 @@ interface APIError {
 const useLyricsGenerator = () => {
   const [lyrics, setLyrics] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showResults, setShowResults] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [generatedMetadata, setGeneratedMetadata] = useState<{
     theme: string;
@@ -128,7 +132,6 @@ const useLyricsGenerator = () => {
       setLoading(false);
     }
   }, []);
-
   const clearLyrics = useCallback(() => {
     setLyrics(null);
     setGeneratedMetadata(null);
@@ -156,9 +159,14 @@ export default function LyricsGeneratorScreen() {
   const [selectedMood, setSelectedMood] = useState<Mood | null>(null);
   const [selectedGenre, setSelectedGenre] = useState<Genre | null>(null);
   const [customPrompt, setCustomPrompt] = useState("");
-
-  const { generateLyrics, loading, error, lyrics, generatedMetadata } =
-    useLyricsGenerator();
+  const {
+    generateLyrics,
+    loading,
+    error,
+    lyrics,
+    generatedMetadata,
+    clearLyrics,
+  } = useLyricsGenerator();
 
   const moodOptions: Mood[] = [
     "happy",
@@ -244,7 +252,18 @@ export default function LyricsGeneratorScreen() {
           >
             {/* Header Section */}
             <View style={styles.headerSection}>
-              <Text style={styles.screenTitle}>Generate Lyrics</Text>
+              <View
+                style={{
+                  display: "flex",
+                  flexDirection: "row",
+                  alignItems: "center",
+                }}
+              >
+                <TouchableOpacity onPress={() => router.replace(ROUTES.CREATE)}>
+                  <Ionicons name="chevron-back" size={28} color="#FFFFFF" />
+                </TouchableOpacity>
+                <Text style={styles.screenTitle}>Generate Lyrics</Text>
+              </View>
               <Text style={styles.screenSubtitle}>
                 Create unique lyrics powered by AI
               </Text>
@@ -337,11 +356,19 @@ export default function LyricsGeneratorScreen() {
               <LyricsResultCard
                 lyrics={lyrics}
                 metadata={generatedMetadata}
-                onRegeneratePress={handleClear}
+                onRegeneratePress={() => {
+                  // <CHANGE> Clear lyrics and reset form to generate new ones
+                  clearLyrics();
+                  handleClear();
+                }}
                 onDownloadPress={() => {
-                  Alert.alert("Save Lyrics", "Lyrics saved to your library", [
-                    { text: "OK" },
-                  ]);
+                  // <CHANGE> Handle save lyrics to library
+                  Alert.alert("Success", "Lyrics saved to your library");
+                }}
+                onBackPress={() => {
+                  // <CHANGE> Go back to lyrics generator form
+                  clearLyrics();
+                  handleClear();
                 }}
               />
             )}

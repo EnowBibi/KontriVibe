@@ -73,6 +73,13 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     marginTop: 4,
   },
+  backButton: {
+    padding: 8,
+    width: 40,
+    height: 40,
+    justifyContent: "center",
+    alignItems: "center",
+  },
 });
 
 export default styles;

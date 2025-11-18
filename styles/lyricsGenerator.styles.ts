@@ -22,15 +22,17 @@ const styles = StyleSheet.create({
     paddingVertical: 24,
   },
   screenTitle: {
-    paddingTop: 20,
+    paddingTop: 11,
     fontSize: 28,
     fontWeight: "700",
     color: "#FFFFFF",
     marginBottom: 8,
+    paddingLeft: 5,
   },
   screenSubtitle: {
-    fontSize: 14,
-    color: "#666",
+    paddingLeft: 35,
+    fontSize: 16,
+    color: "#ffffff",
     fontWeight: "400",
   },
   formSection: {

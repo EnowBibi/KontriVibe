@@ -6,7 +6,7 @@
 -----------------------------------------------------------------------------------------------------*/
 
 import styles from "@/styles/lyricsResultCard.styles";
-import { Copy, Download, RefreshCw, Share2 } from "lucide-react-native";
+import { Copy, Download, RefreshCw, Share2, X } from "lucide-react-native";
 import React from "react";
 import {
   Alert,
@@ -26,6 +26,7 @@ interface LyricsResultCardProps {
   };
   onRegeneratePress: () => void;
   onDownloadPress: () => void;
+  onBackPress: () => void;
 }
 
 export default function LyricsResultCard({
@@ -33,6 +34,7 @@ export default function LyricsResultCard({
   metadata,
   onRegeneratePress,
   onDownloadPress,
+  onBackPress,
 }: LyricsResultCardProps) {
   /*-----------------------------------------------------------------------------------------------------
   | @function handleCopyLyrics
@@ -77,18 +79,9 @@ export default function LyricsResultCard({
           <Text style={styles.metadataLabel}>Theme</Text>
           <Text style={styles.metadataValue}>{metadata.theme}</Text>
         </View>
-        <View style={styles.metadataItem}>
-          <Text style={styles.metadataLabel}>Mood</Text>
-          <Text style={styles.metadataValue}>
-            {metadata.mood.charAt(0).toUpperCase() + metadata.mood.slice(1)}
-          </Text>
-        </View>
-        <View style={styles.metadataItem}>
-          <Text style={styles.metadataLabel}>Genre</Text>
-          <Text style={styles.metadataValue}>
-            {metadata.genre.charAt(0).toUpperCase() + metadata.genre.slice(1)}
-          </Text>
-        </View>
+        <TouchableOpacity style={styles.backButton} onPress={onBackPress}>
+          <X size={24} color="#6366f1" />
+        </TouchableOpacity>
       </View>
 
       {/* Lyrics Display */}
