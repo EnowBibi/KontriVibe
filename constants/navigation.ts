@@ -19,4 +19,7 @@ export const ROUTES = {
   MESSAGES: "/(tabs)/messages",
   DISCOVERY: "/(tabs)/discovery",
   LYRICS_GENERATOR: "/(tabs)/createPost/lyricsGenerator",
+  POST: "/(tabs)/createPost/post",
+  UPLOAD_SONG: "/(tabs)/createPost/uploadSong",
+  CREATE: "/(tabs)/createPost",
 } as const;
