@@ -57,6 +57,10 @@ export default function LoginScreen() {
 
       if (data.token) {
         await AsyncStorage.setItem("authToken", data.token);
+        if (data.user && data.user.id) {
+          await AsyncStorage.setItem("userId", data.user.id.toString());
+          console.log("[Login] User ID stored successfully");
+        }
         console.log("[Login] Token stored successfully");
       }
 

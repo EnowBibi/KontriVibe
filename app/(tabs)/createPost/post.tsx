@@ -9,8 +9,10 @@ import BASE_URL from "@/config/api";
 import { ROUTES } from "@/constants/navigation";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useEvent } from "expo";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
+import { useVideoPlayer, VideoView } from "expo-video";
 import React, { useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -40,6 +42,43 @@ interface Song {
   artist: string;
 }
 
+const DUMMY_CHALLENGES: Challenge[] = [
+  {
+    _id: "c1",
+    title: "#MakossaChallenge",
+    description: "Show us your best Makossa moves! 🇨🇲",
+  },
+  {
+    _id: "c2",
+    title: "#CoupDuMarteau",
+    description: "Hit the beat with the Coup du Marteau dance 🔨",
+  },
+  {
+    _id: "c3",
+    title: "#237Vibes",
+    description: "Represent Cameroon culture in 15 seconds 🇨🇲",
+  },
+  {
+    _id: "c4",
+    title: "#AfroDance",
+    description: "Freestyle to your favorite Afrobeat track 🌍",
+  },
+  {
+    _id: "c5",
+    title: "#MboleFever",
+    description: "Let's see that Mbolé energy! 🔥",
+  },
+];
+
+const DUMMY_SONGS: Song[] = [
+  { _id: "s1", title: "Coup du Marteau", artist: "Tam Sir" },
+  { _id: "s2", title: "People", artist: "Libianca" },
+  { _id: "s3", title: "Mbolé", artist: "Petit Bozard" },
+  { _id: "s4", title: "Calm Down", artist: "Rema" },
+  { _id: "s5", title: "Le Gars La Est Laid", artist: "Minks'" },
+  { _id: "s6", title: "Finesse", artist: "Pheelz ft. BNXN" },
+];
+
 const PostScreen = () => {
   const router = useRouter();
   const [content, setContent] = useState("");
@@ -56,6 +95,17 @@ const PostScreen = () => {
   const [showChallengeModal, setShowChallengeModal] = useState(false);
   const [showSongModal, setShowSongModal] = useState(false);
 
+  const player = useVideoPlayer(mediaUri ?? "", (player) => {
+    player.loop = true;
+    if (mediaUri) {
+      player.play();
+    }
+  });
+
+  const { isPlaying } = useEvent(player, "playingChange", {
+    isPlaying: player.playing,
+  });
+
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
   /*-------------------------------------------------------------------------------------------------
@@ -66,58 +116,29 @@ const PostScreen = () => {
    ----------------------------------------------------------------------------------------------------*/
   const handlePickMedia = async (type: "image" | "video") => {
     try {
-      console.log("[v0] Starting media pick - type:", type);
-
-      const result =
+      const mediaTypes =
         type === "image"
-          ? await ImagePicker.launchImageLibraryAsync({
-              mediaTypes: ImagePicker.MediaTypeOptions.Images,
-              allowsEditing: true,
-              aspect: [9, 16],
-              quality: 1,
-            })
-          : await ImagePicker.launchImageLibraryAsync({
-              mediaTypes: ImagePicker.MediaTypeOptions.Videos,
-              allowsEditing: true,
-              aspect: [9, 16],
-            });
+          ? ImagePicker.MediaTypeOptions.Images
+          : ImagePicker.MediaTypeOptions.Videos;
 
-      console.log("[v0] ImagePicker result:", {
-        canceled: result.canceled,
-        assetsLength: result.assets?.length,
-        firstAssetUri: result.assets?.[0]?.uri,
-        firstAssetType: result.assets?.[0]?.type,
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes,
+        allowsEditing: true,
+        aspect: [9, 16],
+        quality: 1,
       });
 
-      if (!result.canceled && result.assets && result.assets.length > 0) {
-        const selectedUri = result.assets[0].uri;
-        console.log("[v0] Selected URI:", selectedUri);
-        console.log(
-          "[v0] URI exists:",
-          selectedUri !== null && selectedUri !== undefined
-        );
-
-        setMediaUri(selectedUri);
-        setMediaType(type);
-
-        console.log("[v0] State updated - mediaUri set to:", selectedUri);
-        console.log("[v0] State updated - mediaType set to:", type);
-      } else {
-        console.log("[v0] ImagePicker cancelled or no assets returned");
+      if (!result.canceled) {
+        const asset = result.assets[0];
+        console.log("[v0] Media picked asset:", asset);
+        setMediaUri(asset.uri);
+        // Use the type from the asset if available, otherwise fallback to the requested type
+        setMediaType(asset.type === "video" ? "video" : "image");
+        // Note: State updates are async, so mediaUri/mediaType won't update until next render
       }
     } catch (error) {
-      console.error("[v0] Media pick error - Details:", {
-        errorMessage: error instanceof Error ? error.message : String(error),
-        errorStack: error instanceof Error ? error.stack : "No stack",
-        errorType:
-          error instanceof Error ? error.constructor.name : typeof error,
-      });
-      Alert.alert(
-        "Error",
-        `Failed to pick media: ${
-          error instanceof Error ? error.message : "Unknown error"
-        }`
-      );
+      Alert.alert("Error", "Failed to pick media");
+      console.error("[PostScreen] Media pick error:", error);
     }
   };
 
@@ -129,46 +150,27 @@ const PostScreen = () => {
    ----------------------------------------------------------------------------------------------------*/
   const handleCameraCapture = async (type: "image" | "video") => {
     try {
-      console.log("[v0] Starting camera capture - type:", type);
+      const mediaTypes =
+        type === "image"
+          ? ImagePicker.MediaTypeOptions.Images
+          : ImagePicker.MediaTypeOptions.Videos;
 
       const result = await ImagePicker.launchCameraAsync({
-        mediaTypes:
-          type === "image"
-            ? ImagePicker.MediaTypeOptions.Images
-            : ImagePicker.MediaTypeOptions.Videos,
+        mediaTypes,
         allowsEditing: true,
         aspect: [9, 16],
         quality: 1,
       });
 
-      console.log("[v0] Camera result:", {
-        canceled: result.canceled,
-        assetsLength: result.assets?.length,
-        firstAssetUri: result.assets?.[0]?.uri,
-      });
-
-      if (!result.canceled && result.assets && result.assets.length > 0) {
-        const capturedUri = result.assets[0].uri;
-        console.log("[v0] Captured URI:", capturedUri);
-
-        setMediaUri(capturedUri);
-        setMediaType(type);
-
-        console.log("[v0] State updated - mediaUri set to:", capturedUri);
-      } else {
-        console.log("[v0] Camera capture cancelled");
+      if (!result.canceled) {
+        const asset = result.assets[0];
+        console.log("[v0] Camera capture asset:", asset);
+        setMediaUri(asset.uri);
+        setMediaType(asset.type === "video" ? "video" : "image");
       }
     } catch (error) {
-      console.error("[v0] Camera error - Details:", {
-        errorMessage: error instanceof Error ? error.message : String(error),
-        errorStack: error instanceof Error ? error.stack : "No stack",
-      });
-      Alert.alert(
-        "Error",
-        `Failed to capture media: ${
-          error instanceof Error ? error.message : "Unknown error"
-        }`
-      );
+      Alert.alert("Error", "Failed to capture media");
+      console.error("[PostScreen] Camera error:", error);
     }
   };
 
@@ -180,6 +182,10 @@ const PostScreen = () => {
    ----------------------------------------------------------------------------------------------------*/
   const fetchChallenges = async () => {
     try {
+      setChallenges(DUMMY_CHALLENGES);
+
+      /* 
+      // Original API call preserved for future use
       const response = await fetch(`${BASE_URL}/api/challenges`, {
         method: "GET",
         headers: {
@@ -192,8 +198,11 @@ const PostScreen = () => {
         const data = await response.json();
         setChallenges(data.data || []);
       }
+      */
     } catch (error) {
       console.error("[PostScreen] Challenge fetch error:", error);
+      // Fallback to dummy data on error
+      setChallenges(DUMMY_CHALLENGES);
     }
   };
 
@@ -205,6 +214,10 @@ const PostScreen = () => {
    ----------------------------------------------------------------------------------------------------*/
   const fetchSongs = async () => {
     try {
+      setSongs(DUMMY_SONGS);
+
+      /*
+      // Original API call preserved for future use
       const response = await fetch(`${BASE_URL}/api/songs`, {
         method: "GET",
         headers: {
@@ -217,8 +230,11 @@ const PostScreen = () => {
         const data = await response.json();
         setSongs(data.data || []);
       }
+      */
     } catch (error) {
       console.error("[PostScreen] Song fetch error:", error);
+      // Fallback to dummy data on error
+      setSongs(DUMMY_SONGS);
     }
   };
 
@@ -249,11 +265,30 @@ const PostScreen = () => {
       formData.append("aiGenerated", 'false');
 
       if (mediaUri) {
+        const filename =
+          mediaUri.split("/").pop() ||
+          `post-${Date.now()}.${mediaType === "image" ? "jpg" : "mp4"}`;
+
+        // Infer mime type if not explicitly set
+        let mimeType = mediaType === "image" ? "image/jpeg" : "video/mp4";
+        if (filename.endsWith(".png")) mimeType = "image/png";
+        if (filename.endsWith(".gif")) mimeType = "image/gif";
+
         formData.append("media", {
           uri: mediaUri,
-          type: mediaType === "image" ? "image/jpeg" : "video/mp4",
-          name: `post-${Date.now()}.${mediaType === "image" ? "jpg" : "mp4"}`,
+          type: mimeType,
+          name: filename,
         } as any);
+      }
+
+      console.log("[PostScreen] Creating post with data:", formData);
+      // @ts-ignore - _parts is a React Native specific internal property that helps visualize FormData content
+      if (formData._parts) {
+        // @ts-ignore
+        console.log(
+          "[PostScreen] FormData parts:",
+      //    JSON.stringify(formData._parts, null, 2)
+        );
       }
 
       const response = await fetch(`${BASE_URL}/api/posts`, {
@@ -299,27 +334,49 @@ const PostScreen = () => {
         >
           {mediaUri ? (
             <View style={styles.mediaPreviewContainer}>
-              
-              <Image
-                source={{ uri: mediaUri }}
-                style={styles.mediaPreview}
-                resizeMode="cover"
-                onLoad={() => console.log("[v0] Image loaded successfully")}
-                onError={(error) => {
-                  console.error("[v0] Image load error:", error);
-                  Alert.alert(
-                    "Error",
-                    "Failed to load image. Please try again."
-                  );
-                }}
-              />
+              {mediaType === "video" ? (
+                <View style={styles.videoWrapper}>
+                  <VideoView
+                    key={mediaUri}
+                    player={player}
+                    style={styles.mediaPreview}
+                    contentFit="cover"
+                    allowsFullscreen
+                    allowsPictureInPicture
+                  />
+                  <View style={styles.controlsContainer}>
+                    <TouchableOpacity
+                      style={styles.playPauseButton}
+                      onPress={() => {
+                        if (isPlaying) {
+                          player.pause();
+                        } else {
+                          player.play();
+                        }
+                      }}
+                    >
+                      <Ionicons
+                        name={isPlaying ? "pause" : "play"}
+                        size={32}
+                        color="#FFFFFF"
+                      />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              ) : (
+                <Image
+                  source={{ uri: mediaUri }}
+                  style={styles.mediaPreview}
+                  resizeMode="cover"
+                  onError={(error) => console.error("[v0] Image error:", error)}
+                  onLoad={() => console.log("[v0] Image loaded successfully")}
+                />
+              )}
               <TouchableOpacity
                 style={styles.changeMediaBtn}
                 onPress={() => {
-                  console.log("[v0] Clearing media - URI:", mediaUri);
                   setMediaUri(null);
                   setMediaType(null);
-                  console.log("[v0] Media cleared");
                 }}
               >
                 <View style={styles.changeBtnInner}>
@@ -334,7 +391,6 @@ const PostScreen = () => {
             </View>
           ) : (
             <View style={styles.mediaPlaceholder}>
-          
               <Ionicons name="videocam" size={56} color="#FF6B35" />
               <Text style={styles.placeholderText}>
                 Add your video or photo
@@ -670,18 +726,48 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     borderRadius: 16,
     position: "relative",
+    zIndex: 50,
+    elevation: 5,
+    backgroundColor: "#000000", // Ensure a dark background behind media
+  },
+  videoWrapper: {
+    position: "relative",
+    width: "100%",
+    height: 500,
+  },
+  controlsContainer: {
+    position: "absolute",
+    bottom: 20,
+    left: 0,
+    right: 0,
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 60,
+  },
+  playPauseButton: {
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.3)",
   },
   mediaPreview: {
     height: 500,
     width: "100%",
     backgroundColor: "rgba(15, 20, 25, 0.8)",
     borderRadius: 16,
+    zIndex: 50,
   },
   changeMediaBtn: {
     position: "absolute",
     top: 12,
     right: 12,
     padding: 8,
+    zIndex: 100,
+    elevation: 6,
   },
   changeBtnInner: {
     flexDirection: "row",
