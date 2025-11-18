@@ -1,3 +1,4 @@
+import BASE_URL from "@/config/api";
 import { ROUTES } from "@/constants/navigation";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
@@ -13,12 +14,12 @@ import {
   View,
 } from "react-native";
 
-/*----------------------------------------------------------------------------------------------------- 
-| @screen signup
-| @brief    User registration screen for creating new KontriVibe accounts
-| @param    --
-| @return   --
------------------------------------------------------------------------------------------------------*/
+/*-----------------------------------------------------------------------------------------------------
+ | @screen signup
+ | @brief    User registration screen for creating new KontriVibe accounts
+ | @param    --
+ | @return   --
+ ----------------------------------------------------------------------------------------------------*/
 
 export default function SignUpScreen() {
   const router = useRouter();
@@ -30,12 +31,12 @@ export default function SignUpScreen() {
   const [isArtist, setIsArtist] = useState(false);
   const [stageName, setStageName] = useState("");
 
-  /*----------------------------------------------------------------------------------------------------- 
-  | @function handleSignUp
-  | @brief    Validates form inputs and creates new user account
-  | @param    --
-  | @return   --
-  ----------------------------------------------------------------------------------------------------*/
+  /*-----------------------------------------------------------------------------------------------------
+   | @function handleSignUp
+   | @brief    Validates form inputs and creates new user account, then navigates to profile image upload
+   | @param    --
+   | @return   --
+   ----------------------------------------------------------------------------------------------------*/
   const handleSignUp = async () => {
     // Validate inputs
     if (!fullName.trim() || !email.trim() || !password || !confirmPassword) {
@@ -61,8 +62,7 @@ export default function SignUpScreen() {
     setLoading(true);
 
     try {
-      // TODO: Replace with actual API call to backend
-      const response = await fetch("YOUR_API_URL/auth/signup", {
+      const response = await fetch(`${BASE_URL}/api/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -74,15 +74,21 @@ export default function SignUpScreen() {
         }),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error("Signup failed");
+        throw new Error(data.message || "Signup failed");
       }
 
-      Alert.alert("Success", "Account created! Please log in.");
-      router.replace(ROUTES.LOGIN);
+      router.replace({
+        pathname: ROUTES.UPLOAD_PROFILE_PICTURE,
+        params: { userId: data.userId },
+      });
     } catch (error) {
-      Alert.alert("Error", "Failed to create account. Try again.");
-      console.error(error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to create account";
+      Alert.alert("Error", errorMessage);
+      console.error("[SignUp Error]", error);
     } finally {
       setLoading(false);
     }

@@ -1,3 +1,4 @@
+import BASE_URL from "@/config/api";
 import { ROUTES } from "@/constants/navigation";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
@@ -5,13 +6,13 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
-
 /*----------------------------------------------------------------------------------------------------- 
 | @screen login
 | @brief    User login screen for existing KontriVibe accounts
@@ -40,8 +41,9 @@ export default function LoginScreen() {
     setLoading(true);
 
     try {
+      console.log("baseurl:", BASE_URL);
       // TODO: Replace with actual API call to backend
-      const response = await fetch("YOUR_API_URL/auth/login", {
+      const response = await fetch(`${BASE_URL}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -57,13 +59,14 @@ export default function LoginScreen() {
     } catch (error) {
       Alert.alert("Error", "Invalid email or password");
       console.error(error);
+      console.log(error);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container}>
       <View style={styles.header}>
         <Image
           source={require("../../assets/images/logo.png")}
@@ -132,7 +135,7 @@ export default function LoginScreen() {
           </TouchableOpacity>
         </View>
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
@@ -140,7 +143,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#0F1419",
-    justifyContent: "space-between",
   },
   header: {
     paddingHorizontal: 20,

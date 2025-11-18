@@ -1,21 +1,12 @@
-// API Configuration with Dev/Prod Toggle
+// API Configuration with Boolean Toggle
 
-type Environment = "development" | "production";
-
-// Toggle this to switch between dev and prod
-const CURRENT_ENV: Environment =
-  process.env.NODE_ENV === "production" ? "production" : "development";
+const IS_PRODUCTION = true;
 
 const API_URLS = {
-  development: "http://localhost:3001",
-  production: "https://api.kontrivibe.com",
+  development: "http://192.168.56.1:3000",
+  production: "https://kontrivibebackend.onrender.com",
 };
 
-const API_CONFIG = {
-  BASE_URL: API_URLS[CURRENT_ENV],
-  ENVIRONMENT: CURRENT_ENV,
-  TIMEOUT: 30000,
-  RETRY_ATTEMPTS: 3,
-} as const;
+const BASE_URL = IS_PRODUCTION ? API_URLS.production : API_URLS.development;
 
-export default API_CONFIG;
+export default BASE_URL;

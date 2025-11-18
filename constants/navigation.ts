@@ -9,6 +9,8 @@ export const ROUTES = {
   LOGIN: "/(auth)/login",
   SIGNUP: "/(auth)/signup",
   FORGOT_PASSWORD: "/(auth)/forgot-password",
+  VERIFY_CODE: "/verify-code",
+  UPLOAD_PROFILE_PICTURE: "/upload-pp",
 
   // Main app routes
   TABS: "/(tabs)",
