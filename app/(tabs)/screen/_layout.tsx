@@ -21,10 +21,8 @@ export default function CreatePostLayout() {
           gestureEnabled: false,
         }}
       >
-        <Stack.Screen name="index" />
-        <Stack.Screen name="uploadSong" />
-        <Stack.Screen name="lyricsGenerator" />
-        <Stack.Screen name="post" />
+        <Stack.Screen name="LibraryScreen"/>
+      
       </Stack>
       <StatusBar style="auto" />
     </ThemeProvider>

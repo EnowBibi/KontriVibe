@@ -82,7 +82,7 @@ const TabsLayout = () => {
 
       {/* Challenge Tab */}
       <Tabs.Screen
-        name="library"
+        name="screen"
         options={{
           title: " ",
           tabBarIcon: ({ size, color }) => (

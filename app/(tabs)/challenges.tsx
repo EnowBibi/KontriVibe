@@ -1,14 +1,14 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   StyleSheet,
   View,
   Text,
-  Image,
   ImageBackground,
   ScrollView,
   TouchableOpacity,
   Dimensions,
   Animated,
+  PanResponder,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -16,17 +16,35 @@ const { width } = Dimensions.get("window");
 
 const ProfileScreen = () => {
   const [activeTab, setActiveTab] = useState(0);
-  const indicator = new Animated.Value(activeTab === 0 ? 0 : width / 2);
 
-  const switchTab = (tabIndex: React.SetStateAction<number>) => {
+  // Shared animated value for indicator
+  const indicator = useRef(new Animated.Value(0)).current;
+
+  const switchTab = (tabIndex: number) => {
     setActiveTab(tabIndex);
-
-    Animated.timing(indicator, {
-      toValue: tabIndex === 0 ? 0 : width / 2,
-      duration: 200,
+    Animated.spring(indicator, {
+      toValue: tabIndex * (width / 2), // tab 0 = 0, tab 1 = width/2
       useNativeDriver: false,
+      stiffness: 150,
+      damping: 20,
+      mass: 1,
     }).start();
   };
+
+  /** ---------------- SWIPE GESTURE ---------------- **/
+  const panResponder = PanResponder.create({
+    onMoveShouldSetPanResponder: (_, gesture) => {
+      return Math.abs(gesture.dx) > 20; // detect horizontal movement
+    },
+    onPanResponderRelease: (_, gesture) => {
+      if (gesture.dx < -50 && activeTab === 0) {
+        switchTab(1); // swipe left
+      } else if (gesture.dx > 50 && activeTab === 1) {
+        switchTab(0); // swipe right
+      }
+    },
+  });
+  /** ----------------------------------------------- **/
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
@@ -35,10 +53,11 @@ const ProfileScreen = () => {
         style={styles.container}
       >
         <View style={styles.overlay}>
-          <ScrollView contentContainerStyle={styles.scrollContent}>
-        
-         
-
+          {/* ENABLE SWIPING */}
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            {...panResponder.panHandlers}
+          >
             {/* ---- TABS SECTION ---- */}
             <View style={styles.tabContainer}>
               <TouchableOpacity
@@ -69,13 +88,11 @@ const ProfileScreen = () => {
                 </Text>
               </TouchableOpacity>
 
-              {/* White underline indicator */}
+              {/* White underline indicator with smooth transition */}
               <Animated.View
                 style={[
                   styles.indicator,
-                  {
-                    left: indicator,
-                  },
+                  { left: indicator },
                 ]}
               />
             </View>
@@ -84,10 +101,10 @@ const ProfileScreen = () => {
             {activeTab === 0 ? (
               <Text style={styles.tabContent}>Explore content goes here...</Text>
             ) : (
-              <Text style={styles.tabContent}>MyChallenge content goes here...</Text>
+              <Text style={styles.tabContent}>
+                MyChallenge content goes here...
+              </Text>
             )}
-
-           
           </ScrollView>
         </View>
       </ImageBackground>
@@ -107,36 +124,6 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: 20,
     alignItems: "center",
-  },
-  coverImageContainer: {
-    width: "100%",
-    height: 180,
-    borderRadius: 15,
-    overflow: "hidden",
-    marginBottom: 60,
-  },
-  coverImage: {
-    width: "100%",
-    height: "100%",
-  },
-  profileImageContainer: {
-    position: "absolute",
-    top: 120,
-    alignSelf: "center",
-    borderWidth: 4,
-    borderColor: "#fff",
-    borderRadius: 60,
-    overflow: "hidden",
-  },
-  profileImage: {
-    width: 120,
-    height: 120,
-  },
-  username: {
-    fontSize: 22,
-    fontWeight: "bold",
-    color: "white",
-    marginTop: 70,
   },
 
   /** ---------------- Tabs ---------------- **/
