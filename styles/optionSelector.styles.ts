@@ -14,7 +14,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#1a1a1a",
+    color: "#FFFFFF",
     marginBottom: 12,
   },
   optionsScroll: {
@@ -25,14 +25,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 20,
-    backgroundColor: "#f0f0f0",
+    backgroundColor: "#1a3a2a",
     marginRight: 12,
     borderWidth: 1,
-    borderColor: "#d0d0d0",
+    borderColor: "#FF6B35",
   },
   optionButtonSelected: {
-    backgroundColor: "#6366f1",
-    borderColor: "#6366f1",
+    backgroundColor: "#FF6B35",
+    borderColor: "#FF6B35",
   },
   optionText: {
     fontSize: 13,

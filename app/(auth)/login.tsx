@@ -1,8 +1,11 @@
+import BASE_URL from "@/config/api";
 import { ROUTES } from "@/constants/navigation";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Image,
   ScrollView,
   StyleSheet,
@@ -11,6 +14,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+
 /*----------------------------------------------------------------------------------------------------- 
 | @screen login
 | @brief    User login screen for existing KontriVibe accounts
@@ -26,11 +30,11 @@ export default function LoginScreen() {
 
   /*----------------------------------------------------------------------------------------------------- 
   | @function handleLogin
-  | @brief    Authenticates user with email and password
+  | @brief    Authenticates user with email and password and stores token in AsyncStorage
   | @param    --
   | @return   --
   ----------------------------------------------------------------------------------------------------*/
-  /*const handleLogin = async () => {
+  const handleLogin = async () => {
     if (!email.trim() || !password) {
       Alert.alert("Error", "Please enter email and password");
       return;
@@ -39,7 +43,6 @@ export default function LoginScreen() {
     setLoading(true);
 
     try {
-      console.log("baseurl:", BASE_URL);
       const response = await fetch(`${BASE_URL}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -51,25 +54,26 @@ export default function LoginScreen() {
       }
 
       const data = await response.json();
-      // TODO: Store token securely using SecureStore or AsyncStorage
+
+      if (data.token) {
+        await AsyncStorage.setItem("authToken", data.token);
+        console.log("[Login] Token stored successfully");
+      }
+
       router.replace(ROUTES.TABS);
     } catch (error) {
       Alert.alert("Error", "Invalid email or password");
-      console.error(error);
-      console.log(error);
+      console.error("[Login Error]", error);
     } finally {
       setLoading(false);
     }
-  };*/
-  const handleLogin = async () => {
-    router.replace(ROUTES.TABS);
   };
 
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
         <Image
-          source={require("../../assets/images/logo.png")}
+          source={require("@/assets/images/logo.png")}
           style={{ width: 300, height: 300 }}
         />
         <Text style={styles.title}>Welcome Back</Text>

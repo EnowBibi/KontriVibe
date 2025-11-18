@@ -20,14 +20,12 @@ const styles = StyleSheet.create({
   headerSection: {
     paddingHorizontal: 16,
     paddingVertical: 24,
-    backgroundColor: "#f8f9fa",
-    borderBottomWidth: 1,
-    borderBottomColor: "#e0e0e0",
   },
   screenTitle: {
+    paddingTop: 20,
     fontSize: 28,
     fontWeight: "700",
-    color: "#1a1a1a",
+    color: "#FFFFFF",
     marginBottom: 8,
   },
   screenSubtitle: {
@@ -45,18 +43,18 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#1a1a1a",
+    color: "#FFFFFF",
     marginBottom: 8,
   },
   textInput: {
     borderWidth: 1,
-    borderColor: "#d0d0d0",
+    borderColor: "#FF6B35",
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 14,
-    color: "#1a1a1a",
-    backgroundColor: "#ffffff",
+    color: "#ffffff",
+    backgroundColor: "#1a3a2a",
     minHeight: 44,
   },
   largeInput: {
@@ -70,7 +68,7 @@ const styles = StyleSheet.create({
     textAlign: "right",
   },
   generateButton: {
-    backgroundColor: "#6366f1",
+    backgroundColor: "#FF6B35",
     paddingVertical: 14,
     borderRadius: 8,
     alignItems: "center",
