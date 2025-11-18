@@ -39,6 +39,13 @@
           }
         }
       ],
+      [
+        "expo-video",
+        {
+          "supportsBackgroundPlayback": true,
+          "supportsPictureInPicture": true
+        }
+      ],
       "expo-secure-store"
     ],
     "experiments": {
