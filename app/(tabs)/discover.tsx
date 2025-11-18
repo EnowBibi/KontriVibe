@@ -3,9 +3,9 @@ import { Text, View } from 'react-native'
 
 const discover = () => {
   return (
-    <View>
-      <Text>discover</Text>
-    </View>
+     <View style={{ backgroundColor: '#00463A', flex: 1 }}>
+          <Text>index</Text>
+        </View>
   )
 }
 

@@ -1,19 +1,31 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 import React from "react";
-import { StyleSheet } from "react-native";
+import { StyleSheet, View } from "react-native";
+import Svg, { Polygon } from "react-native-svg";
 
 const TabsLayout = () => {
   return (
-    <Tabs>
+    <Tabs
+      screenOptions={{
+        headerShown: false,
+        tabBarStyle: {
+          height: 80,
+          backgroundColor: "#1a1a1a",
+          borderTopLeftRadius: 24,
+          borderTopRightRadius: 24,
+          borderTopWidth: 0,
+          paddingBottom: 12,
+          paddingTop: 8,
+        },
+      }}
+    >
       {/* Home Tab */}
       <Tabs.Screen
         name="index"
         options={{
           title: " ",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home" size={size} color="white" />
-          ),
+          tabBarIcon: ({ size }) => <Ionicons name="home" size={size} color="white" />,
         }}
       />
 
@@ -22,20 +34,31 @@ const TabsLayout = () => {
         name="explore"
         options={{
           title: " ",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="sparkles-outline" size={size} color="white" />
-          ),
+          tabBarIcon: ({ size }) => <Ionicons name="sparkles-outline" size={size} color="white" />,
         }}
       />
 
-      {/* Create Post Tab (Plus Icon) */}
+      {/* Create Post Tab (Hexagon with Plus) */}
       <Tabs.Screen
         name="createPost"
         options={{
           title: " ",
-          tabBarLabel: () => null, // hide label
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="add" size={size + 8} color="white" />
+          tabBarLabel: () => null,
+          tabBarIcon: ({ size }) => (
+            <View style={styles.hexWrapper}>
+              <Svg width={56} height={48} viewBox="0 0 100 86">
+                <Polygon
+                  points="50,0 100,25 100,61 50,86 0,61 0,25"
+                  fill="#FF6B35"
+                />
+              </Svg>
+              <Ionicons
+                name="add"
+                size={28}
+                color="white"
+                style={styles.plusIcon}
+              />
+            </View>
           ),
         }}
       />
@@ -45,9 +68,7 @@ const TabsLayout = () => {
         name="discover"
         options={{
           title: " ",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="sparkles-outline" size={size} color="white" />
-          ),
+          tabBarIcon: ({ size }) => <Ionicons name="sparkles-outline" size={size} color="white" />,
         }}
       />
 
@@ -56,9 +77,7 @@ const TabsLayout = () => {
         name="profile"
         options={{
           title: " ",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person-outline" size={size} color="white" />
-          ),
+          tabBarIcon: ({ size }) => <Ionicons name="person-outline" size={size} color="white" />,
         }}
       />
     </Tabs>
@@ -67,4 +86,19 @@ const TabsLayout = () => {
 
 export default TabsLayout;
 
-const styles = StyleSheet.create({});
+const styles = StyleSheet.create({
+  hexWrapper: {
+    width: 56,
+    height: 48,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  plusIcon: {
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    marginTop: -14,
+    marginLeft: -14,
+  },
+});
