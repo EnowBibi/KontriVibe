@@ -18,4 +18,5 @@ export const ROUTES = {
   PROFILE: "/(tabs)/profile",
   MESSAGES: "/(tabs)/messages",
   DISCOVERY: "/(tabs)/discovery",
+  LYRICS_GENERATOR: "/(tabs)/createPost/lyricsGenerator",
 } as const;

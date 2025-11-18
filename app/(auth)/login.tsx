@@ -1,10 +1,8 @@
-import BASE_URL from "@/config/api";
 import { ROUTES } from "@/constants/navigation";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Image,
   ScrollView,
   StyleSheet,
@@ -32,7 +30,7 @@ export default function LoginScreen() {
   | @param    --
   | @return   --
   ----------------------------------------------------------------------------------------------------*/
-  const handleLogin = async () => {
+  /*const handleLogin = async () => {
     if (!email.trim() || !password) {
       Alert.alert("Error", "Please enter email and password");
       return;
@@ -42,7 +40,6 @@ export default function LoginScreen() {
 
     try {
       console.log("baseurl:", BASE_URL);
-      // TODO: Replace with actual API call to backend
       const response = await fetch(`${BASE_URL}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -63,6 +60,9 @@ export default function LoginScreen() {
     } finally {
       setLoading(false);
     }
+  };*/
+  const handleLogin = async () => {
+    router.replace(ROUTES.TABS);
   };
 
   return (
