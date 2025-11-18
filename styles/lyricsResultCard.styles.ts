@@ -69,7 +69,7 @@ const styles = StyleSheet.create({
   },
   actionButtonText: {
     fontSize: 12,
-    color: "#6366f1",
+    color: "#FF6B35",
     fontWeight: "600",
     marginTop: 4,
   },
