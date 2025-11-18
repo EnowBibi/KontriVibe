@@ -246,7 +246,7 @@ const PostScreen = () => {
       formData.append("visibility", visibility);
       formData.append("relatedChallengeId", selectedChallenge?._id || "");
       formData.append("relatedSongId", selectedSong?._id || "");
-      formData.append("aiGenerated", false);
+      formData.append("aiGenerated", 'false');
 
       if (mediaUri) {
         formData.append("media", {
@@ -299,7 +299,7 @@ const PostScreen = () => {
         >
           {mediaUri ? (
             <View style={styles.mediaPreviewContainer}>
-              {console.log("[v0] Rendering media preview - URI:", mediaUri)}
+              
               <Image
                 source={{ uri: mediaUri }}
                 style={styles.mediaPreview}
@@ -334,9 +334,7 @@ const PostScreen = () => {
             </View>
           ) : (
             <View style={styles.mediaPlaceholder}>
-              {console.log(
-                "[v0] Rendering media placeholder - mediaUri is null/undefined"
-              )}
+          
               <Ionicons name="videocam" size={56} color="#FF6B35" />
               <Text style={styles.placeholderText}>
                 Add your video or photo
