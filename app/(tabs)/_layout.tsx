@@ -1,35 +1,70 @@
-import { Tabs } from 'expo-router';
-import React from 'react';
+import { Ionicons } from "@expo/vector-icons";
+import { Tabs } from "expo-router";
+import React from "react";
+import { StyleSheet } from "react-native";
 
-import { HapticTab } from '@/components/haptic-tab';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-
-export default function TabLayout() {
-  const colorScheme = useColorScheme();
-
+const TabsLayout = () => {
   return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        headerShown: false,
-        tabBarButton: HapticTab,
-      }}>
+    <Tabs>
+      {/* Home Tab */}
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          title: " ",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="home" size={size} color="white" />
+          ),
         }}
       />
+
+      {/* Explore Tab */}
       <Tabs.Screen
         name="explore"
         options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          title: " ",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="sparkles-outline" size={size} color="white" />
+          ),
+        }}
+      />
+
+      {/* Create Post Tab (Plus Icon) */}
+      <Tabs.Screen
+        name="createPost"
+        options={{
+          title: " ",
+          tabBarLabel: () => null, // hide label
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="add" size={size + 8} color="white" />
+          ),
+        }}
+      />
+
+      {/* Discover Tab */}
+      <Tabs.Screen
+        name="discover"
+        options={{
+          title: " ",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="sparkles-outline" size={size} color="white" />
+          ),
+        }}
+      />
+
+      {/* Profile Tab */}
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: " ",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="person-outline" size={size} color="white" />
+          ),
         }}
       />
     </Tabs>
   );
-}
+};
+
+export default TabsLayout;
+
+const styles = StyleSheet.create({});
