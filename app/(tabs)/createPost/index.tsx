@@ -62,6 +62,7 @@ const CreateProjectsScreen = () => {
       source={require("@/assets/images/img-bg.jpg")}
       style={styles.container}
     >
+      
       <View style={styles.overlay}>
         {/* Header */}
         <View style={styles.header}>

@@ -46,7 +46,7 @@ const TabsLayout = () => {
 
       {/* Explore Tab */}
       <Tabs.Screen
-        name="explore"
+        name="challenges"
         options={{
           title: " ",
           tabBarIcon: ({ size, color }) => (

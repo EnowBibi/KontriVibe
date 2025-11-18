@@ -8,6 +8,7 @@ const ProfileScreen = () => {
       source={require("@/assets/images/img-bg.jpg")}
       style={styles.container}
     >
+      
       {/* Overlay */}
       <View style={styles.overlay}>
         <ScrollView contentContainerStyle={styles.scrollContent}>
