@@ -54,6 +54,7 @@ const ProfileScreen = () => {
           setPosts([
             { id: "dummy1", image: require("@/assets/images/lady.png") },
             { id: "dummy2", image: require("@/assets/images/room.png") },
+            { id: "dummy3", image: require("@/assets/images/room.png") },
           ]);
         }
       } catch (error) {
@@ -61,6 +62,7 @@ const ProfileScreen = () => {
         setPosts([
           { id: "dummy1", image: require("@/assets/images/lady.png") },
           { id: "dummy2", image: require("@/assets/images/room.png") },
+          { id: "dummy3", image: require("@/assets/images/room.png") },
         ]);
       }
 
@@ -128,9 +130,9 @@ const ProfileScreen = () => {
 
           {/* Profile Info */}
           <View style={styles.profileInfo}>
-            <Text style={styles.name}>{user?.username || "User"}</Text>
+            <Text style={styles.name}>{user?.fullName || "User"}</Text>
             <Text style={styles.bio}>
-              {user?.bio || "🎵 Music Lover | Artist"}
+              {user?.role || "🎵 Music Lover | Artist"}
             </Text>
             <View style={styles.statsContainer}>
               <View style={styles.stat}>
@@ -277,13 +279,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   name: {
+    marginTop: 30,
     fontSize: 24,
     fontWeight: "700",
     color: "#FFFFFF",
     textAlign: "center",
   },
   bio: {
-    fontSize: 14,
+    fontSize: 16,
     color: "#CCCCCC",
     textAlign: "center",
     marginTop: 8,
