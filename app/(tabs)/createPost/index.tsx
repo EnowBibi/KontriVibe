@@ -1,91 +1,70 @@
+/*-----------------------------------------------------------------------------------------------------
+ | @screen CreateProjectsScreen
+ | @brief    Displays create options and recent projects with consistent UI
+ | @param    --
+ | @return   React.JSX.Element
+ ----------------------------------------------------------------------------------------------------*/
+
 import BASE_URL from "@/config/api";
 import { ROUTES } from "@/constants/navigation";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  Animated,
-  Dimensions,
   Image,
   ImageBackground,
-  PanResponder,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-
-const { width } = Dimensions.get("window");
 
 interface Song {
   _id: string;
   title: string;
-  artist: string;
+  artist: string; // or artistId populated
   coverImage?: string;
   audioUrl: string;
 }
 
-const DUMMY_CHALLENGES = [
-  {
-    id: "1",
-    title: "#MakossaChallenge",
-    description: "Show us your best Makossa moves!",
-    participants: "1.2k",
-    image: "https://i.ytimg.com/vi/3X9wEwulYyU/maxresdefault.jpg", // Placeholder
-  },
-  {
-    id: "2",
-    title: "#CoupDuMarteau",
-    description: "Can you handle the hammer beat?",
-    participants: "5.4k",
-    image: "https://i1.sndcdn.com/artworks-000665976001-025600-t500x500.jpg", // Placeholder
-  },
-  {
-    id: "3",
-    title: "#AfroVibe",
-    description: "Vibe to the latest Afro beats.",
-    participants: "3.8k",
-    image:
-      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ7z3z3z3z3z3z3z3z3z3z3z3z3z3z3z3z3z3&s", // Placeholder
-  },
-];
-
-const Challenges = () => {
+const CreateProjectsScreen = () => {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState(0);
-  const [songs, setSongs] = useState<Song[]>([]);
+  const [selectedOption, setSelectedOption] = useState<string | null>(null);
+  const [recentSongs, setRecentSongs] = useState<Song[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Shared animated value for indicator
-  const indicator = useRef(new Animated.Value(0)).current;
-
   useEffect(() => {
-    if (activeTab === 0) {
-      fetchSongs();
-    }
-  }, [activeTab]);
+    fetchUserSongs();
+  }, []);
 
-  const fetchSongs = async () => {
+  const fetchUserSongs = async () => {
     try {
       setLoading(true);
       const token = await AsyncStorage.getItem("authToken");
-      // Fetch all songs
-      const response = await fetch(`${BASE_URL}/api/songs`, {
+      const userId = await AsyncStorage.getItem("userId");
+
+      if (!token || !userId) return;
+
+      const response = await fetch(`${BASE_URL}/api/songs/artist/${userId}`, {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
+      console.log("Music fetch response status:", response.status);
+
       if (response.ok) {
         const data = await response.json();
-        setSongs(Array.isArray(data) ? data : data.data || []);
-      } else {
-        console.log("Failed to fetch songs");
+        console.log("Parsed data:", JSON.stringify(data, null, 2));
+
+        // The data IS the array, not data.data
+        setRecentSongs(data || []); // Change this line - remove the .data
+        console.log("Number of songs:", data?.length);
+        console.log("Songs stored in state");
       }
     } catch (error) {
       console.error("Failed to fetch songs:", error);
@@ -94,8 +73,19 @@ const Challenges = () => {
     }
   };
 
-  const handleChallengePress = () => {
+  const handleUploadMusic = () => {
+    router.push(ROUTES.UPLOAD_SONG);
+    setSelectedOption("upload");
+  };
+
+  const handleAILyrics = () => {
+    router.push(ROUTES.LYRICS_GENERATOR);
+    setSelectedOption("ai");
+  };
+
+  const handleMakePost = () => {
     router.push(ROUTES.POST);
+    setSelectedOption("post");
   };
 
   const handlePlaySong = (song: Song) => {
@@ -114,215 +104,192 @@ const Challenges = () => {
     });
   };
 
-  const switchTab = (tabIndex: number) => {
-    setActiveTab(tabIndex);
-    Animated.spring(indicator, {
-      toValue: tabIndex * (width / 2), // tab 0 = 0, tab 1 = width/2
-      useNativeDriver: false,
-      stiffness: 150,
-      damping: 20,
-      mass: 1,
-    }).start();
-  };
-
-  /** ---------------- SWIPE GESTURE ---------------- **/
-  const panResponder = PanResponder.create({
-    onMoveShouldSetPanResponder: (_, gesture) => {
-      return Math.abs(gesture.dx) > 20; // detect horizontal movement
-    },
-    onPanResponderRelease: (_, gesture) => {
-      if (gesture.dx < -50 && activeTab === 0) {
-        switchTab(1); // swipe left
-      } else if (gesture.dx > 50 && activeTab === 1) {
-        switchTab(0); // swipe right
-      }
-    },
-  });
-  /** ----------------------------------------------- **/
-
   return (
-    <SafeAreaView style={{ flex: 1 }}>
-      <ImageBackground
-        source={require("@/assets/images/img-bg.jpg")}
-        style={styles.container}
-      >
-        <View style={styles.overlay}>
-          {/* ENABLE SWIPING */}
-          <ScrollView
-            contentContainerStyle={styles.scrollContent}
-            {...panResponder.panHandlers}
+    <ImageBackground
+      source={require("@/assets/images/img-bg.jpg")}
+      style={styles.container}
+    >
+      <View style={styles.overlay}>
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()}>
+            <Ionicons name="chevron-back" size={28} color="#FFFFFF" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Create</Text>
+          <View style={{ width: 28 }} />
+        </View>
+
+        <ScrollView
+          contentContainerStyle={styles.contentContainer}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Create Options */}
+          <TouchableOpacity
+            style={[
+              styles.createButton,
+              selectedOption === "upload" && styles.createButtonActive,
+            ]}
+            onPress={handleUploadMusic}
+            activeOpacity={0.8}
           >
-            {/* ---- TABS SECTION ---- */}
-            <View style={styles.tabContainer}>
-              <TouchableOpacity
-                onPress={() => switchTab(0)}
-                style={styles.tabButton}
-              >
-                <Text
-                  style={[
-                    styles.tabText,
-                    activeTab === 0 && { color: "#fff", fontWeight: "bold" },
-                  ]}
-                >
-                  Explore
-                </Text>
-              </TouchableOpacity>
+            <View style={styles.iconWrapper}>
+              <Ionicons name="musical-note" size={32} color="#FFFFFF" />
+            </View>
+            <Text style={styles.buttonText}>Upload New Song</Text>
+          </TouchableOpacity>
 
-              <TouchableOpacity
-                onPress={() => switchTab(1)}
-                style={styles.tabButton}
-              >
-                <Text
-                  style={[
-                    styles.tabText,
-                    activeTab === 1 && { color: "#fff", fontWeight: "bold" },
-                  ]}
-                >
-                  MyChallenge
-                </Text>
-              </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.createButton,
+              selectedOption === "ai" && styles.createButtonActive,
+            ]}
+            onPress={handleAILyrics}
+            activeOpacity={0.8}
+          >
+            <View style={styles.iconWrapper}>
+              <Ionicons name="sparkles" size={32} color="#FFFFFF" />
+            </View>
+            <Text style={styles.buttonText}>AI Lyrics Generator</Text>
+          </TouchableOpacity>
 
-              {/* White underline indicator with smooth transition */}
-              <Animated.View style={[styles.indicator, { left: indicator }]} />
+          <TouchableOpacity
+            style={[
+              styles.createButton,
+              selectedOption === "post" && styles.createButtonActive,
+            ]}
+            onPress={handleMakePost}
+            activeOpacity={0.8}
+          >
+            <View style={styles.iconWrapper}>
+              <Ionicons name="image" size={32} color="#FFFFFF" />
+            </View>
+            <Text style={styles.buttonText}>Make Post</Text>
+          </TouchableOpacity>
+
+          {/* Recent Projects Section */}
+          <View style={styles.recentProjectsContainer}>
+            <View style={styles.recentProjectsHeader}>
+              <Text style={styles.recentProjectsTitle}>Recent Projects</Text>
+              <TouchableOpacity onPress={fetchUserSongs}>
+                <Ionicons name="refresh" size={20} color="#FF6B35" />
+              </TouchableOpacity>
             </View>
 
-            {/* ---- TAB CONTENT ---- */}
-            {activeTab === 0 ? (
-              <View style={styles.contentContainer}>
-                <Text style={styles.sectionTitle}>Trending Music</Text>
-                {loading ? (
-                  <ActivityIndicator
-                    color="#FF6B35"
-                    style={{ marginTop: 20 }}
-                  />
-                ) : songs.length > 0 ? (
-                  songs.map((song) => (
-                    <TouchableOpacity
-                      key={song._id}
-                      style={styles.songItem}
-                      onPress={() => handlePlaySong(song)}
-                    >
-                      <View style={styles.songImagePlaceholder}>
-                        {song.coverImage ? (
-                          <Image
-                            source={{ uri: song.coverImage }}
-                            style={styles.songImage}
-                          />
-                        ) : (
-                          <Ionicons
-                            name="musical-note"
-                            size={24}
-                            color="#FF6B35"
-                          />
-                        )}
-                      </View>
-                      <View style={styles.songInfo}>
-                        <Text style={styles.songName}>{song.title}</Text>
-                        <Text style={styles.songArtist}>
-                          {typeof song.artist === "object"
-                            ? (song.artist as any).name
-                            : "Unknown Artist"}
-                        </Text>
-                      </View>
-                      <Ionicons name="play-circle" size={32} color="#FF6B35" />
-                    </TouchableOpacity>
-                  ))
-                ) : (
-                  <Text style={styles.emptyText}>No music found.</Text>
-                )}
-              </View>
-            ) : (
-              <View style={styles.contentContainer}>
-                <Text style={styles.sectionTitle}>Popular Challenges</Text>
-                {DUMMY_CHALLENGES.map((challenge) => (
-                  <TouchableOpacity
-                    key={challenge.id}
-                    style={styles.challengeCard}
-                    onPress={handleChallengePress}
-                  >
-                    <ImageBackground
-                      source={{ uri: challenge.image }}
-                      style={styles.challengeImage}
-                      imageStyle={{ borderRadius: 12 }}
-                    >
-                      <View style={styles.challengeOverlay}>
-                        <Text style={styles.challengeTitle}>
-                          {challenge.title}
-                        </Text>
-                        <Text style={styles.challengeParticipants}>
-                          {challenge.participants} joined
-                        </Text>
-                      </View>
-                    </ImageBackground>
-                    <Text style={styles.challengeDescription}>
-                      {challenge.description}
+            {loading ? (
+              <ActivityIndicator color="#FF6B35" style={{ marginTop: 20 }} />
+            ) : recentSongs.length > 0 ? (
+              recentSongs.map((song) => (
+                <TouchableOpacity
+                  key={song._id}
+                  style={styles.projectItem}
+                  onPress={() => handlePlaySong(song)}
+                >
+                  <View style={styles.projectImagePlaceholder}>
+                    {song.coverImage ? (
+                      <Image
+                        source={{ uri: song.coverImage }}
+                        style={styles.projectImage}
+                      />
+                    ) : (
+                      <Ionicons name="musical-note" size={24} color="#FF6B35" />
+                    )}
+                  </View>
+                  <View style={styles.projectInfo}>
+                    <Text style={styles.projectName}>{song.title}</Text>
+                    <Text style={styles.projectArtist}>
+                      {typeof song.artist === "object"
+                        ? (song.artist as any).name
+                        : "Unknown Artist"}
                     </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
+                  </View>
+                  <Ionicons name="play-circle" size={32} color="#FF6B35" />
+                </TouchableOpacity>
+              ))
+            ) : (
+              <Text style={styles.emptyText}>No songs uploaded yet.</Text>
             )}
-          </ScrollView>
-        </View>
-      </ImageBackground>
-    </SafeAreaView>
+          </View>
+        </ScrollView>
+      </View>
+    </ImageBackground>
   );
 };
+
+export default CreateProjectsScreen;
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    resizeMode: "cover",
+    backgroundColor: "#0F1419",
   },
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.4)",
+    backgroundColor: "rgba(15, 20, 25, 0.6)",
   },
-  scrollContent: {
-    padding: 20,
-    alignItems: "center",
-  },
-
-  /** ---------------- Tabs ---------------- **/
-  tabContainer: {
-    marginTop: 20,
-    width: "100%",
+  header: {
     flexDirection: "row",
-    borderBottomWidth: 1,
-    borderColor: "#ffffff55",
-    position: "relative",
-  },
-  tabButton: {
-    flex: 1,
-    paddingVertical: 12,
+    justifyContent: "space-between",
     alignItems: "center",
+    paddingHorizontal: 16,
+    paddingTop: 30,
+    paddingBottom: 16,
   },
-  tabText: {
-    color: "#ccc",
-    fontSize: 16,
-  },
-  indicator: {
-    position: "absolute",
-    bottom: -1,
-    width: width / 2,
-    height: 3,
-    backgroundColor: "#fff",
-  },
-  tabContent: {
-    marginTop: 20,
-    color: "white",
-    fontSize: 16,
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: "700",
+    color: "#FFFFFF",
+    textAlign: "center",
+    flex: 1,
   },
   contentContainer: {
-    width: "100%",
-    marginTop: 20,
+    paddingHorizontal: 16,
+    paddingBottom: 100,
   },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
+  createButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(15, 20, 25, 0.8)",
+    borderWidth: 1,
+    borderColor: "rgba(255, 107, 53, 0.2)",
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    gap: 16,
+  },
+  createButtonActive: {
+    borderColor: "#FF6B35",
+    backgroundColor: "rgba(255, 107, 53, 0.1)",
+  },
+  iconWrapper: {
+    width: 56,
+    height: 56,
+    borderRadius: 12,
+    backgroundColor: "rgba(255, 107, 53, 0.15)",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255, 107, 53, 0.3)",
+  },
+  buttonText: {
+    fontSize: 18,
+    fontWeight: "600",
     color: "#FFFFFF",
-    marginBottom: 15,
   },
-  songItem: {
+  recentProjectsContainer: {
+    marginTop: 24,
+  },
+  recentProjectsHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  recentProjectsTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#FFFFFF",
+  },
+  projectItem: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "rgba(255, 255, 255, 0.05)",
@@ -330,7 +297,7 @@ const styles = StyleSheet.create({
     padding: 12,
     marginBottom: 12,
   },
-  songImagePlaceholder: {
+  projectImagePlaceholder: {
     width: 48,
     height: 48,
     borderRadius: 8,
@@ -340,85 +307,27 @@ const styles = StyleSheet.create({
     marginRight: 12,
     overflow: "hidden",
   },
-  songImage: {
+  projectImage: {
     width: "100%",
     height: "100%",
   },
-  songInfo: {
+  projectInfo: {
     flex: 1,
   },
-  songName: {
+  projectName: {
     fontSize: 16,
     fontWeight: "600",
     color: "#FFFFFF",
     marginBottom: 4,
   },
-  songArtist: {
+  projectArtist: {
     fontSize: 14,
     color: "#888888",
   },
   emptyText: {
     color: "#888888",
     textAlign: "center",
-    marginTop: 10,
+    marginTop: 20,
     fontStyle: "italic",
   },
-  challengeCard: {
-    marginBottom: 20,
-  },
-  challengeImage: {
-    height: 150,
-    justifyContent: "flex-end",
-    marginBottom: 8,
-  },
-  challengeOverlay: {
-    backgroundColor: "rgba(0,0,0,0.6)",
-    padding: 10,
-    borderBottomLeftRadius: 12,
-    borderBottomRightRadius: 12,
-  },
-  challengeTitle: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-  challengeParticipants: {
-    color: "#FF6B35",
-    fontSize: 12,
-    marginTop: 2,
-  },
-  challengeDescription: {
-    color: "#ccc",
-    fontSize: 14,
-  },
-
-  /** ---------------- Buttons ---------------- **/
-  buttonRow: {
-    flexDirection: "row",
-    marginTop: 20,
-    gap: 10,
-  },
-  button: {
-    backgroundColor: "#fff",
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 8,
-  },
-  buttonText: {
-    fontWeight: "bold",
-    color: "#000",
-  },
-  buttonOutline: {
-    borderWidth: 1,
-    borderColor: "#fff",
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 8,
-  },
-  buttonTextOutline: {
-    color: "#fff",
-    fontWeight: "bold",
-  },
 });
-
-export default Challenges;
