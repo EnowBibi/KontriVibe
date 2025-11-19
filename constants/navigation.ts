@@ -22,4 +22,5 @@ export const ROUTES = {
   POST: "/(tabs)/createPost/post",
   UPLOAD_SONG: "/(tabs)/createPost/uploadSong",
   CREATE: "/(tabs)/createPost",
+  PLAY_AUDIO: "/play-audio-screen",
 } as const;

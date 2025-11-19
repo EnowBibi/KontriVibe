@@ -1,15 +1,19 @@
 /*-----------------------------------------------------------------------------------------------------
  | @screen CreateProjectsScreen
- | @brief    Displays create options for uploading music, generating lyrics, and making posts
+ | @brief    Displays create options and recent projects with consistent UI
  | @param    --
  | @return   React.JSX.Element
  ----------------------------------------------------------------------------------------------------*/
 
+import BASE_URL from "@/config/api";
 import { ROUTES } from "@/constants/navigation";
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
+  Image,
   ImageBackground,
   ScrollView,
   StyleSheet,
@@ -18,47 +22,80 @@ import {
   View,
 } from "react-native";
 
+interface Song {
+  _id: string;
+  title: string;
+  artist: string; // or artistId populated
+  coverImage?: string;
+  audioUrl: string;
+}
+
 const CreateProjectsScreen = () => {
   const router = useRouter();
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
+  const [recentSongs, setRecentSongs] = useState<Song[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  /*-------------------------------------------------------------------------------------------------
-   | @function handleUploadMusic
-   | @brief    Navigates to music upload screen or handles upload logic
-   | @param    --
-   | @return   --
-   ----------------------------------------------------------------------------------------------------*/
+  useEffect(() => {
+    fetchUserSongs();
+  }, []);
+
+  const fetchUserSongs = async () => {
+    try {
+      setLoading(true);
+      const token = await AsyncStorage.getItem("authToken");
+      const userId = await AsyncStorage.getItem("userId");
+
+      if (!token || !userId) return;
+
+      // Assuming an endpoint to get user's uploaded songs
+      const response = await fetch(`${BASE_URL}/api/songs/artist/${userId}`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      console.log("Music fetch response: ", response);
+      if (response.ok) {
+        const data = await response.json();
+        setRecentSongs(data.data || []);
+      }
+    } catch (error) {
+      console.error("Failed to fetch songs:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleUploadMusic = () => {
-    router.replace({
-      pathname: ROUTES.UPLOAD_SONG,
-    });
+    router.push(ROUTES.UPLOAD_SONG);
     setSelectedOption("upload");
   };
 
-  /*-------------------------------------------------------------------------------------------------
-   | @function handleAILyrics
-   | @brief    Navigates to AI lyrics generator screen
-   | @param    --
-   | @return   --
-   ----------------------------------------------------------------------------------------------------*/
   const handleAILyrics = () => {
-    router.replace({
-      pathname: ROUTES.LYRICS_GENERATOR,
-    });
+    router.push(ROUTES.LYRICS_GENERATOR);
     setSelectedOption("ai");
   };
 
-  /*-------------------------------------------------------------------------------------------------
-   | @function handleMakePost
-   | @brief    Navigates to make post/create content screen
-   | @param    --
-   | @return   --
-   ----------------------------------------------------------------------------------------------------*/
   const handleMakePost = () => {
-    router.replace({
-      pathname: ROUTES.POST,
-    });
+    router.push(ROUTES.POST);
     setSelectedOption("post");
+  };
+
+  const handlePlaySong = (song: Song) => {
+    router.push({
+      pathname: ROUTES.PLAY_AUDIO,
+      params: {
+        songId: song._id,
+        title: song.title,
+        artist:
+          typeof song.artist === "object"
+            ? (song.artist as any).name
+            : song.artist,
+        coverImage: song.coverImage,
+        audioUrl: song.audioUrl,
+      },
+    });
   };
 
   return (
@@ -66,7 +103,6 @@ const CreateProjectsScreen = () => {
       source={require("@/assets/images/img-bg.jpg")}
       style={styles.container}
     >
-      
       <View style={styles.overlay}>
         {/* Header */}
         <View style={styles.header}>
@@ -74,19 +110,14 @@ const CreateProjectsScreen = () => {
             <Ionicons name="chevron-back" size={28} color="#FFFFFF" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Create</Text>
-          <TouchableOpacity
-          // onPress={() => router.push("/(tabs)/createPost/search")}
-          >
-            <Ionicons name="search" size={24} color="#FFFFFF" />
-          </TouchableOpacity>
+          <View style={{ width: 28 }} />
         </View>
 
-        {/* Create Options */}
         <ScrollView
           contentContainerStyle={styles.contentContainer}
           showsVerticalScrollIndicator={false}
         >
-          {/* Upload Music Button */}
+          {/* Create Options */}
           <TouchableOpacity
             style={[
               styles.createButton,
@@ -95,11 +126,12 @@ const CreateProjectsScreen = () => {
             onPress={handleUploadMusic}
             activeOpacity={0.8}
           >
-            <Ionicons name="musical-note" size={40} color="#FFFFFF" />
+            <View style={styles.iconWrapper}>
+              <Ionicons name="musical-note" size={32} color="#FFFFFF" />
+            </View>
             <Text style={styles.buttonText}>Upload New Song</Text>
           </TouchableOpacity>
 
-          {/* AI Lyrics Generator Button */}
           <TouchableOpacity
             style={[
               styles.createButton,
@@ -108,11 +140,12 @@ const CreateProjectsScreen = () => {
             onPress={handleAILyrics}
             activeOpacity={0.8}
           >
-            <Ionicons name="sparkles" size={40} color="#FFFFFF" />
+            <View style={styles.iconWrapper}>
+              <Ionicons name="sparkles" size={32} color="#FFFFFF" />
+            </View>
             <Text style={styles.buttonText}>AI Lyrics Generator</Text>
           </TouchableOpacity>
 
-          {/* Make Post Button */}
           <TouchableOpacity
             style={[
               styles.createButton,
@@ -121,7 +154,9 @@ const CreateProjectsScreen = () => {
             onPress={handleMakePost}
             activeOpacity={0.8}
           >
-            <Ionicons name="image" size={40} color="#FFFFFF" />
+            <View style={styles.iconWrapper}>
+              <Ionicons name="image" size={32} color="#FFFFFF" />
+            </View>
             <Text style={styles.buttonText}>Make Post</Text>
           </TouchableOpacity>
 
@@ -129,36 +164,44 @@ const CreateProjectsScreen = () => {
           <View style={styles.recentProjectsContainer}>
             <View style={styles.recentProjectsHeader}>
               <Text style={styles.recentProjectsTitle}>Recent Projects</Text>
-              <TouchableOpacity>
-                <Text style={styles.seeAllText}>See all</Text>
+              <TouchableOpacity onPress={fetchUserSongs}>
+                <Ionicons name="refresh" size={20} color="#FF6B35" />
               </TouchableOpacity>
             </View>
 
-            {/* Recent Project Items */}
-            {[
-              { name: "Grainy days", artist: "Breezy" },
-              { name: "Coffee", artist: "Lofi Beats" },
-              { name: "Raindrops", artist: "Ambient" },
-              { name: "Coffee", artist: "Jazz" },
-              { name: "Grainy days", artist: "Soul" },
-            ].map((project, index) => (
-              <View key={index} style={styles.projectItem}>
-                <View style={styles.projectImagePlaceholder}>
-                  <Ionicons name="musical-note" size={32} color="#FF6B35" />
-                </View>
-                <View style={styles.projectInfo}>
-                  <Text style={styles.projectName}>{project.name}</Text>
-                  <Text style={styles.projectArtist}>{project.artist}</Text>
-                </View>
-                <TouchableOpacity>
-                  <Ionicons
-                    name="ellipsis-vertical"
-                    size={20}
-                    color="#888888"
-                  />
+            {loading ? (
+              <ActivityIndicator color="#FF6B35" style={{ marginTop: 20 }} />
+            ) : recentSongs.length > 0 ? (
+              recentSongs.map((song) => (
+                <TouchableOpacity
+                  key={song._id}
+                  style={styles.projectItem}
+                  onPress={() => handlePlaySong(song)}
+                >
+                  <View style={styles.projectImagePlaceholder}>
+                    {song.coverImage ? (
+                      <Image
+                        source={{ uri: song.coverImage }}
+                        style={styles.projectImage}
+                      />
+                    ) : (
+                      <Ionicons name="musical-note" size={24} color="#FF6B35" />
+                    )}
+                  </View>
+                  <View style={styles.projectInfo}>
+                    <Text style={styles.projectName}>{song.title}</Text>
+                    <Text style={styles.projectArtist}>
+                      {typeof song.artist === "object"
+                        ? (song.artist as any).name
+                        : "Unknown Artist"}
+                    </Text>
+                  </View>
+                  <Ionicons name="play-circle" size={32} color="#FF6B35" />
                 </TouchableOpacity>
-              </View>
-            ))}
+              ))
+            ) : (
+              <Text style={styles.emptyText}>No songs uploaded yet.</Text>
+            )}
           </View>
         </ScrollView>
       </View>
@@ -171,11 +214,11 @@ export default CreateProjectsScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#1a3a2a",
+    backgroundColor: "#0F1419",
   },
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(15, 20, 25, 0.4)",
+    backgroundColor: "rgba(15, 20, 25, 0.6)",
   },
   header: {
     flexDirection: "row",
@@ -187,7 +230,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 24,
-    fontWeight: "600",
+    fontWeight: "700",
     color: "#FFFFFF",
     textAlign: "center",
     flex: 1,
@@ -196,39 +239,38 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 100,
   },
-  /* Added transparent buttons with orange glowing shadow */
   createButton: {
-    borderWidth: 2,
-    borderColor: "#FF6B35",
-    borderRadius: 20,
-    paddingVertical: 30,
-    paddingHorizontal: 16,
-    marginVertical: 12,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
+    backgroundColor: "rgba(15, 20, 25, 0.8)",
+    borderWidth: 1,
+    borderColor: "rgba(255, 107, 53, 0.2)",
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
     gap: 16,
-    backgroundColor: "rgba(15, 20, 25, 0.3)",
-    shadowColor: "#FF6B35",
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.6,
-    shadowRadius: 12,
-    elevation: 12,
   },
   createButtonActive: {
+    borderColor: "#FF6B35",
+    backgroundColor: "rgba(255, 107, 53, 0.1)",
+  },
+  iconWrapper: {
+    width: 56,
+    height: 56,
+    borderRadius: 12,
     backgroundColor: "rgba(255, 107, 53, 0.15)",
-    shadowOpacity: 0.8,
-    shadowRadius: 16,
-    elevation: 16,
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255, 107, 53, 0.3)",
   },
   buttonText: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: "600",
     color: "#FFFFFF",
   },
   recentProjectsContainer: {
-    marginTop: 32,
-    marginBottom: 20,
+    marginTop: 24,
   },
   recentProjectsHeader: {
     flexDirection: "row",
@@ -237,42 +279,49 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   recentProjectsTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: "600",
     color: "#FFFFFF",
-  },
-  seeAllText: {
-    fontSize: 14,
-    color: "#FF6B35",
-    fontWeight: "500",
   },
   projectItem: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "rgba(255, 107, 53, 0.2)",
+    backgroundColor: "rgba(255, 255, 255, 0.05)",
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 12,
   },
   projectImagePlaceholder: {
-    width: 50,
-    height: 50,
+    width: 48,
+    height: 48,
     borderRadius: 8,
     backgroundColor: "rgba(255, 107, 53, 0.1)",
     justifyContent: "center",
     alignItems: "center",
     marginRight: 12,
+    overflow: "hidden",
+  },
+  projectImage: {
+    width: "100%",
+    height: "100%",
   },
   projectInfo: {
     flex: 1,
   },
   projectName: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: "600",
     color: "#FFFFFF",
     marginBottom: 4,
   },
   projectArtist: {
-    fontSize: 12,
+    fontSize: 14,
     color: "#888888",
+  },
+  emptyText: {
+    color: "#888888",
+    textAlign: "center",
+    marginTop: 20,
+    fontStyle: "italic",
   },
 });
