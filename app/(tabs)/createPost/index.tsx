@@ -48,17 +48,23 @@ const CreateProjectsScreen = () => {
 
       if (!token || !userId) return;
 
-      // Assuming an endpoint to get user's uploaded songs
       const response = await fetch(`${BASE_URL}/api/songs/artist/${userId}`, {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      console.log("Music fetch response: ", response);
+
+      console.log("Music fetch response status:", response.status);
+
       if (response.ok) {
         const data = await response.json();
-        setRecentSongs(data.data || []);
+        console.log("Parsed data:", JSON.stringify(data, null, 2));
+
+        // The data IS the array, not data.data
+        setRecentSongs(data || []); // Change this line - remove the .data
+        console.log("Number of songs:", data?.length);
+        console.log("Songs stored in state");
       }
     } catch (error) {
       console.error("Failed to fetch songs:", error);
