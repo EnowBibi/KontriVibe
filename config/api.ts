@@ -1,9 +1,9 @@
 // API Configuration with Boolean Toggle
 
-const IS_PRODUCTION = true;
+const IS_PRODUCTION = false;
 
 const API_URLS = {
-  development: "http://192.168.56.1:3000",
+  development: "http://10.86.243.72:3000",
   production: "https://kontrivibebackend.onrender.com",
 };
 

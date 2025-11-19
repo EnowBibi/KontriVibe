@@ -44,39 +44,39 @@ interface Song {
 
 const DUMMY_CHALLENGES: Challenge[] = [
   {
-    _id: "c1",
+    _id: "691b5acd9f812667381f07c8",
     title: "#MakossaChallenge",
     description: "Show us your best Makossa moves! 🇨🇲",
   },
   {
-    _id: "c2",
+    _id: "691b5abd9f812667381f07c8",
     title: "#CoupDuMarteau",
     description: "Hit the beat with the Coup du Marteau dance 🔨",
   },
   {
-    _id: "c3",
+    _id: "691b5abd9f812667371f07c8",
     title: "#237Vibes",
     description: "Represent Cameroon culture in 15 seconds 🇨🇲",
   },
   {
-    _id: "c4",
+    _id: "691b5aud9f812667381f07c8",
     title: "#AfroDance",
     description: "Freestyle to your favorite Afrobeat track 🌍",
   },
   {
-    _id: "c5",
+    _id: "691b5abd9f812567381f07c8",
     title: "#MboleFever",
     description: "Let's see that Mbolé energy! 🔥",
   },
 ];
 
 const DUMMY_SONGS: Song[] = [
-  { _id: "s1", title: "Coup du Marteau", artist: "Tam Sir" },
-  { _id: "s2", title: "People", artist: "Libianca" },
-  { _id: "s3", title: "Mbolé", artist: "Petit Bozard" },
-  { _id: "s4", title: "Calm Down", artist: "Rema" },
-  { _id: "s5", title: "Le Gars La Est Laid", artist: "Minks'" },
-  { _id: "s6", title: "Finesse", artist: "Pheelz ft. BNXN" },
+  { _id: "691b5abd9f812667382f07c8", title: "Coup du Marteau", artist: "Tam Sir" },
+  { _id: "691b5abd9f812567381f07c8", title: "People", artist: "Libianca" },
+  { _id: "691b5abd9f812667381f07c3", title: "Mbolé", artist: "Petit Bozard" },
+  { _id: "691b5abd9f812667385f07c8", title: "Calm Down", artist: "Rema" },
+  { _id: "691b5abd9f812467381f07c8", title: "Le Gars La Est Laid", artist: "Minks'" },
+  { _id: "691b5abd9f82667381f07c8", title: "Finesse", artist: "Pheelz ft. BNXN" },
 ];
 
 const PostScreen = () => {
@@ -132,9 +132,7 @@ const PostScreen = () => {
         const asset = result.assets[0];
         console.log("[v0] Media picked asset:", asset);
         setMediaUri(asset.uri);
-        // Use the type from the asset if available, otherwise fallback to the requested type
         setMediaType(asset.type === "video" ? "video" : "image");
-        // Note: State updates are async, so mediaUri/mediaType won't update until next render
       }
     } catch (error) {
       Alert.alert("Error", "Failed to pick media");
@@ -201,7 +199,6 @@ const PostScreen = () => {
       */
     } catch (error) {
       console.error("[PostScreen] Challenge fetch error:", error);
-      // Fallback to dummy data on error
       setChallenges(DUMMY_CHALLENGES);
     }
   };
@@ -233,14 +230,13 @@ const PostScreen = () => {
       */
     } catch (error) {
       console.error("[PostScreen] Song fetch error:", error);
-      // Fallback to dummy data on error
       setSongs(DUMMY_SONGS);
     }
   };
 
   /*-------------------------------------------------------------------------------------------------
    | @function handleCreatePost
-   | @brief    Creates post with media upload to Cloudinary and saves to database
+   | @brief    Creates post with media upload and saves to database
    | @param    --
    | @return   --
    ----------------------------------------------------------------------------------------------------*/
@@ -256,40 +252,69 @@ const PostScreen = () => {
       const token = await AsyncStorage.getItem("authToken");
       const userId = await AsyncStorage.getItem("userId");
 
+      if (!token) {
+        Alert.alert("Error", "Authentication token not found. Please log in again.");
+        setLoading(false);
+        return;
+      }
+
+      if (!userId) {
+        Alert.alert("Error", "User ID not found. Please log in again.");
+        setLoading(false);
+        return;
+      }
+
+      console.log("[PostScreen] Auth token:", token?.substring(0, 20) + "...");
+      console.log("[PostScreen] User ID:", userId);
+      console.log("[PostScreen] Base URL:", BASE_URL);
+      console.log("[PostScreen] Media URI:", mediaUri);
+
       const formData = new FormData();
-      formData.append("authorId", userId || "");
+      formData.append("authorId", userId);
       formData.append("content", content);
       formData.append("visibility", visibility);
-      formData.append("relatedChallengeId", selectedChallenge?._id || "");
-      formData.append("relatedSongId", selectedSong?._id || "");
       formData.append("aiGenerated", "false");
+      
+      if (selectedChallenge?._id) {
+        formData.append("relatedChallengeId", selectedChallenge._id);
+      }
+      if (selectedSong?._id) {
+        formData.append("relatedSongId", selectedSong._id);
+      }
 
       if (mediaUri) {
-        const filename =
-          mediaUri.split("/").pop() ||
-          `post-${Date.now()}.${mediaType === "image" ? "jpg" : "mp4"}`;
+        try {
+          const filename =
+            mediaUri.split("/").pop() ||
+            `post-${Date.now()}.${mediaType === "image" ? "jpg" : "mp4"}`;
 
-        // Infer mime type if not explicitly set
-        let mimeType = mediaType === "image" ? "image/jpeg" : "video/mp4";
-        if (filename.endsWith(".png")) mimeType = "image/png";
-        if (filename.endsWith(".gif")) mimeType = "image/gif";
+          let mimeType = mediaType === "image" ? "image/jpeg" : "video/mp4";
+          if (filename.endsWith(".png")) mimeType = "image/png";
+          if (filename.endsWith(".gif")) mimeType = "image/gif";
+          if (filename.endsWith(".mov")) mimeType = "video/quicktime";
 
-        formData.append("media", {
-          uri: mediaUri,
-          type: mimeType,
-          name: filename,
-        } as any);
+          formData.append("media", {
+            uri: mediaUri,
+            type: mimeType,
+            name: filename,
+          } as any);
+
+          console.log("[PostScreen] Media appended:", { filename, mimeType, uri: mediaUri });
+        } catch (mediaError) {
+          console.error("[PostScreen] Media append error:", mediaError);
+          Alert.alert("Error", "Failed to process media file");
+          setLoading(false);
+          return;
+        }
       }
 
-      console.log("[PostScreen] Creating post with data:", formData);
-      // @ts-ignore - _parts is a React Native specific internal property that helps visualize FormData content
-      if (formData._parts) {
-        // @ts-ignore
-        console.log(
-          "[PostScreen] FormData parts:",
-         // JSON.stringify(formData._parts, null, 2)
-        );
-      }
+      console.log("[PostScreen] Creating post with FormData");
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => {
+        controller.abort();
+        console.log("[PostScreen] Request timeout after 120 seconds");
+      }, 120000); // Increased timeout to 120 seconds for large video uploads
 
       const response = await fetch(`${BASE_URL}/api/posts`, {
         method: "POST",
@@ -297,17 +322,58 @@ const PostScreen = () => {
           Authorization: `Bearer ${token}`,
         },
         body: formData,
+        signal: controller.signal,
       });
 
+      clearTimeout(timeoutId);
+
+      console.log("[PostScreen] Response status:", response.status);
+      console.log("[PostScreen] Response headers:", response.headers);
+
+      const responseText = await response.text();
+      console.log("[PostScreen] Response body:", responseText);
+
       if (!response.ok) {
-        throw new Error("Failed to create post");
+        let errorMessage = "Failed to create post";
+        
+        try {
+          const errorData = JSON.parse(responseText);
+          errorMessage = errorData.message || errorData.error || errorMessage;
+        } catch (e) {
+          errorMessage = responseText || errorMessage;
+        }
+
+        throw new Error(`Server error (${response.status}): ${errorMessage}`);
       }
 
+      const responseData = JSON.parse(responseText);
+      console.log("[PostScreen] Post created successfully:", responseData);
+
       Alert.alert("Success", "Post created successfully!");
+      
+      setContent("");
+      setMediaUri(null);
+      setMediaType(null);
+      setSelectedChallenge(null);
+      setSelectedSong(null);
+      
       router.replace(ROUTES.TABS);
-    } catch (error) {
-      Alert.alert("Error", "Failed to create post");
+    } catch (error: any) {
       console.error("[PostScreen] Create post error:", error);
+      
+      let errorMessage = "Failed to create post";
+      
+      if (error.name === "AbortError") {
+        errorMessage = "Upload timeout. Your file may be too large or your connection is slow. Please try again.";
+      } else if (error.message?.includes("Network request failed")) {
+        errorMessage = "Network error. Please check:\n1. Your internet connection\n2. The API URL is correct\n3. The backend server is running";
+      } else if (error.message?.includes("Server error")) {
+        errorMessage = error.message;
+      } else {
+        errorMessage = error.message || errorMessage;
+      }
+
+      Alert.alert("Error", errorMessage);
     } finally {
       setLoading(false);
     }
@@ -596,7 +662,6 @@ const PostScreen = () => {
           </TouchableOpacity>
         </ScrollView>
 
-        {/* Challenge Selection Modal */}
         <Modal visible={showChallengeModal} animationType="slide" transparent>
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
@@ -641,7 +706,6 @@ const PostScreen = () => {
           </View>
         </Modal>
 
-        {/* Song Selection Modal */}
         <Modal visible={showSongModal} animationType="slide" transparent>
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
@@ -720,7 +784,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 100,
   },
-  /* TikTok-style vertical media preview with full height */
   mediaPreviewContainer: {
     marginBottom: 24,
     overflow: "hidden",
@@ -728,7 +791,7 @@ const styles = StyleSheet.create({
     position: "relative",
     zIndex: 50,
     elevation: 5,
-    backgroundColor: "#000000", // Ensure a dark background behind media
+    backgroundColor: "#000000",
   },
   videoWrapper: {
     position: "relative",
