@@ -101,8 +101,20 @@ const Challenges = () => {
         const data = await response.json();
         console.log("Songs API response:", data);
 
-        // Handle both direct array and wrapped data formats
-        const songsArray = Array.isArray(data) ? data : data.data || [];
+        // Handle different response formats:
+        // 1. Direct array: [...]
+        // 2. Wrapped in data: { data: [...] }
+        // 3. Wrapped in songs: { songs: [...] }
+        let songsArray: Song[] = [];
+
+        if (Array.isArray(data)) {
+          songsArray = data;
+        } else if (data.songs && Array.isArray(data.songs)) {
+          songsArray = data.songs;
+        } else if (data.data && Array.isArray(data.data)) {
+          songsArray = data.data;
+        }
+
         setSongs(songsArray);
         console.log("Songs loaded:", songsArray.length);
       } else {

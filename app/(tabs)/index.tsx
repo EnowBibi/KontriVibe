@@ -30,7 +30,8 @@ const FYP_DATA = [
     comments: "10K",
     shares: "5K",
     type: "video",
-    uri: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4", // Placeholder
+    uri: "https://res.cloudinary.com/dxkkodmbv/video/upload/q_auto:low,f_auto,w_720/Locko_-_Je_serai_là_Official_Music_Video_360P_xfpr3o.mp4", // Placeholder
+    //uri: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4", // Placeholder
     avatar: "https://i.pravatar.cc/150?u=cameroon_vibes",
   },
   {
