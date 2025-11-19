@@ -24,25 +24,41 @@ const { width } = Dimensions.get("window");
 interface Song {
   _id: string;
   title: string;
-  artist: string;
+  artistId:
+    | {
+        _id: string;
+        fullName: string;
+        email: string;
+      }
+    | string;
   coverImage?: string;
   audioUrl: string;
+  genre?: string;
+  mood?: string;
 }
 
-const DUMMY_CHALLENGES = [
+interface Challenge {
+  id: string;
+  title: string;
+  description: string;
+  participants: string;
+  image: string;
+}
+
+const DUMMY_CHALLENGES: Challenge[] = [
   {
     id: "1",
     title: "#MakossaChallenge",
     description: "Show us your best Makossa moves!",
     participants: "1.2k",
-    image: "https://i.ytimg.com/vi/3X9wEwulYyU/maxresdefault.jpg", // Placeholder
+    image: "https://i.ytimg.com/vi/3X9wEwulYyU/maxresdefault.jpg",
   },
   {
     id: "2",
     title: "#CoupDuMarteau",
     description: "Can you handle the hammer beat?",
     participants: "5.4k",
-    image: "https://i1.sndcdn.com/artworks-000665976001-025600-t500x500.jpg", // Placeholder
+    image: "https://i1.sndcdn.com/artworks-000665976001-025600-t500x500.jpg",
   },
   {
     id: "3",
@@ -50,7 +66,7 @@ const DUMMY_CHALLENGES = [
     description: "Vibe to the latest Afro beats.",
     participants: "3.8k",
     image:
-      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ7z3z3z3z3z3z3z3z3z3z3z3z3z3z3z3z3z3&s", // Placeholder
+      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ7z3z3z3z3z3z3z3z3z3z3z3z3z3z3z3z3z3&s",
   },
 ];
 
@@ -73,7 +89,7 @@ const Challenges = () => {
     try {
       setLoading(true);
       const token = await AsyncStorage.getItem("authToken");
-      // Fetch all songs
+
       const response = await fetch(`${BASE_URL}/api/songs`, {
         method: "GET",
         headers: {
@@ -83,9 +99,14 @@ const Challenges = () => {
 
       if (response.ok) {
         const data = await response.json();
-        setSongs(Array.isArray(data) ? data : data.data || []);
+        console.log("Songs API response:", data);
+
+        // Handle both direct array and wrapped data formats
+        const songsArray = Array.isArray(data) ? data : data.data || [];
+        setSongs(songsArray);
+        console.log("Songs loaded:", songsArray.length);
       } else {
-        console.log("Failed to fetch songs");
+        console.log("Failed to fetch songs, status:", response.status);
       }
     } catch (error) {
       console.error("Failed to fetch songs:", error);
@@ -94,21 +115,24 @@ const Challenges = () => {
     }
   };
 
-  const handleChallengePress = () => {
+  const handleChallengePress = (challenge: Challenge) => {
+    console.log("Challenge pressed:", challenge.title);
     router.push(ROUTES.POST);
   };
 
   const handlePlaySong = (song: Song) => {
+    const artistName =
+      typeof song.artistId === "object"
+        ? song.artistId.fullName
+        : "Unknown Artist";
+
     router.push({
       pathname: ROUTES.PLAY_AUDIO,
       params: {
         songId: song._id,
         title: song.title,
-        artist:
-          typeof song.artist === "object"
-            ? (song.artist as any).name
-            : song.artist,
-        coverImage: song.coverImage,
+        artist: artistName,
+        coverImage: song.coverImage || "",
         audioUrl: song.audioUrl,
       },
     });
@@ -117,7 +141,7 @@ const Challenges = () => {
   const switchTab = (tabIndex: number) => {
     setActiveTab(tabIndex);
     Animated.spring(indicator, {
-      toValue: tabIndex * (width / 2), // tab 0 = 0, tab 1 = width/2
+      toValue: tabIndex * (width / 2),
       useNativeDriver: false,
       stiffness: 150,
       damping: 20,
@@ -128,13 +152,13 @@ const Challenges = () => {
   /** ---------------- SWIPE GESTURE ---------------- **/
   const panResponder = PanResponder.create({
     onMoveShouldSetPanResponder: (_, gesture) => {
-      return Math.abs(gesture.dx) > 20; // detect horizontal movement
+      return Math.abs(gesture.dx) > 20;
     },
     onPanResponderRelease: (_, gesture) => {
       if (gesture.dx < -50 && activeTab === 0) {
-        switchTab(1); // swipe left
+        switchTab(1);
       } else if (gesture.dx > 50 && activeTab === 1) {
-        switchTab(0); // swipe right
+        switchTab(0);
       }
     },
   });
@@ -147,9 +171,9 @@ const Challenges = () => {
         style={styles.container}
       >
         <View style={styles.overlay}>
-          {/* ENABLE SWIPING */}
           <ScrollView
             contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
             {...panResponder.panHandlers}
           >
             {/* ---- TABS SECTION ---- */}
@@ -161,10 +185,10 @@ const Challenges = () => {
                 <Text
                   style={[
                     styles.tabText,
-                    activeTab === 0 && { color: "#fff", fontWeight: "bold" },
+                    activeTab === 0 && styles.tabTextActive,
                   ]}
                 >
-                  Explore
+                  Explore Music
                 </Text>
               </TouchableOpacity>
 
@@ -175,95 +199,147 @@ const Challenges = () => {
                 <Text
                   style={[
                     styles.tabText,
-                    activeTab === 1 && { color: "#fff", fontWeight: "bold" },
+                    activeTab === 1 && styles.tabTextActive,
                   ]}
                 >
-                  MyChallenge
+                  My Challenges
                 </Text>
               </TouchableOpacity>
 
-              {/* White underline indicator with smooth transition */}
               <Animated.View style={[styles.indicator, { left: indicator }]} />
             </View>
 
             {/* ---- TAB CONTENT ---- */}
             {activeTab === 0 ? (
+              // EXPLORE MUSIC TAB
               <View style={styles.contentContainer}>
-                <Text style={styles.sectionTitle}>Trending Music</Text>
+                <View style={styles.sectionHeader}>
+                  <Text style={styles.sectionTitle}>Trending Music</Text>
+                  <TouchableOpacity onPress={fetchSongs}>
+                    <Ionicons name="refresh" size={20} color="#FF6B35" />
+                  </TouchableOpacity>
+                </View>
+
                 {loading ? (
-                  <ActivityIndicator
-                    color="#FF6B35"
-                    style={{ marginTop: 20 }}
-                  />
+                  <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color="#FF6B35" />
+                    <Text style={styles.loadingText}>Loading music...</Text>
+                  </View>
                 ) : songs.length > 0 ? (
                   songs.map((song) => (
                     <TouchableOpacity
                       key={song._id}
                       style={styles.songItem}
                       onPress={() => handlePlaySong(song)}
+                      activeOpacity={0.7}
                     >
                       <View style={styles.songImagePlaceholder}>
                         {song.coverImage ? (
                           <Image
                             source={{ uri: song.coverImage }}
                             style={styles.songImage}
+                            resizeMode="cover"
                           />
                         ) : (
                           <Ionicons
                             name="musical-note"
-                            size={24}
+                            size={28}
                             color="#FF6B35"
                           />
                         )}
                       </View>
                       <View style={styles.songInfo}>
-                        <Text style={styles.songName}>{song.title}</Text>
-                        <Text style={styles.songArtist}>
-                          {typeof song.artist === "object"
-                            ? (song.artist as any).name
+                        <Text style={styles.songName} numberOfLines={1}>
+                          {song.title}
+                        </Text>
+                        <Text style={styles.songArtist} numberOfLines={1}>
+                          {typeof song.artistId === "object"
+                            ? song.artistId.fullName
                             : "Unknown Artist"}
                         </Text>
+                        {song.genre && (
+                          <Text style={styles.songGenre}>{song.genre}</Text>
+                        )}
                       </View>
-                      <Ionicons name="play-circle" size={32} color="#FF6B35" />
+                      <View style={styles.playButtonContainer}>
+                        <Ionicons
+                          name="play-circle"
+                          size={40}
+                          color="#FF6B35"
+                        />
+                      </View>
                     </TouchableOpacity>
                   ))
                 ) : (
-                  <Text style={styles.emptyText}>No music found.</Text>
+                  <View style={styles.emptyContainer}>
+                    <Ionicons
+                      name="musical-notes-outline"
+                      size={48}
+                      color="#888888"
+                    />
+                    <Text style={styles.emptyText}>No music available yet</Text>
+                    <Text style={styles.emptySubtext}>
+                      Check back later for trending tracks
+                    </Text>
+                  </View>
                 )}
+              </View>
+            ) : (
+              // MY CHALLENGES TAB
+              <View style={styles.contentContainer}>
+                <View style={styles.sectionHeader}>
+                  <Text style={styles.sectionTitle}>Popular Challenges</Text>
+                  <View style={styles.challengeBadge}>
+                    <Text style={styles.challengeBadgeText}>
+                      {DUMMY_CHALLENGES.length}
+                    </Text>
+                  </View>
+                </View>
 
-                <Text style={[styles.sectionTitle, { marginTop: 30 }]}>
-                  Popular Challenges
-                </Text>
                 {DUMMY_CHALLENGES.map((challenge) => (
                   <TouchableOpacity
                     key={challenge.id}
                     style={styles.challengeCard}
-                    onPress={handleChallengePress}
+                    onPress={() => handleChallengePress(challenge)}
+                    activeOpacity={0.8}
                   >
                     <ImageBackground
                       source={{ uri: challenge.image }}
                       style={styles.challengeImage}
-                      imageStyle={{ borderRadius: 12 }}
+                      imageStyle={{ borderRadius: 16 }}
                     >
                       <View style={styles.challengeOverlay}>
-                        <Text style={styles.challengeTitle}>
-                          {challenge.title}
-                        </Text>
-                        <Text style={styles.challengeParticipants}>
-                          {challenge.participants} joined
-                        </Text>
+                        <View style={styles.challengeHeader}>
+                          <Text style={styles.challengeTitle}>
+                            {challenge.title}
+                          </Text>
+                          <View style={styles.participantsContainer}>
+                            <Ionicons name="people" size={14} color="#FF6B35" />
+                            <Text style={styles.challengeParticipants}>
+                              {challenge.participants}
+                            </Text>
+                          </View>
+                        </View>
                       </View>
                     </ImageBackground>
-                    <Text style={styles.challengeDescription}>
-                      {challenge.description}
-                    </Text>
+                    <View style={styles.challengeFooter}>
+                      <Text style={styles.challengeDescription}>
+                        {challenge.description}
+                      </Text>
+                      <View style={styles.joinButtonContainer}>
+                        <Ionicons
+                          name="arrow-forward-circle"
+                          size={20}
+                          color="#FF6B35"
+                        />
+                        <Text style={styles.joinButtonText}>
+                          Join Challenge
+                        </Text>
+                      </View>
+                    </View>
                   </TouchableOpacity>
                 ))}
               </View>
-            ) : (
-              <Text style={styles.tabContent}>
-                MyChallenge content goes here...
-              </Text>
             )}
           </ScrollView>
         </View>
@@ -279,70 +355,127 @@ const styles = StyleSheet.create({
   },
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.4)",
+    backgroundColor: "rgba(15, 20, 25, 0.6)",
   },
   scrollContent: {
     padding: 20,
-    alignItems: "center",
+    paddingBottom: 40,
   },
 
   /** ---------------- Tabs ---------------- **/
   tabContainer: {
-    marginTop: 20,
+    marginTop: 10,
     width: "100%",
     flexDirection: "row",
     borderBottomWidth: 1,
-    borderColor: "#ffffff55",
+    borderColor: "rgba(255, 255, 255, 0.2)",
     position: "relative",
   },
   tabButton: {
     flex: 1,
-    paddingVertical: 12,
+    paddingVertical: 14,
     alignItems: "center",
   },
   tabText: {
-    color: "#ccc",
-    fontSize: 16,
+    color: "#888888",
+    fontSize: 15,
+    fontWeight: "500",
+  },
+  tabTextActive: {
+    color: "#FFFFFF",
+    fontWeight: "700",
   },
   indicator: {
     position: "absolute",
     bottom: -1,
     width: width / 2,
     height: 3,
-    backgroundColor: "#fff",
+    backgroundColor: "#FF6B35",
+    borderRadius: 2,
   },
-  tabContent: {
-    marginTop: 20,
-    color: "white",
-    fontSize: 16,
-  },
+
+  /** ---------------- Content ---------------- **/
   contentContainer: {
     width: "100%",
-    marginTop: 20,
+    marginTop: 24,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
   },
   sectionTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
+    fontSize: 22,
+    fontWeight: "700",
     color: "#FFFFFF",
-    marginBottom: 15,
+    letterSpacing: -0.5,
   },
+  challengeBadge: {
+    backgroundColor: "rgba(255, 107, 53, 0.2)",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#FF6B35",
+  },
+  challengeBadgeText: {
+    color: "#FF6B35",
+    fontSize: 12,
+    fontWeight: "700",
+  },
+
+  /** ---------------- Loading & Empty States ---------------- **/
+  loadingContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 40,
+  },
+  loadingText: {
+    color: "#888888",
+    marginTop: 12,
+    fontSize: 14,
+  },
+  emptyContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 60,
+  },
+  emptyText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "600",
+    marginTop: 16,
+  },
+  emptySubtext: {
+    color: "#888888",
+    fontSize: 14,
+    marginTop: 8,
+    textAlign: "center",
+  },
+
+  /** ---------------- Song Items ---------------- **/
   songItem: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "rgba(255, 255, 255, 0.05)",
-    borderRadius: 12,
+    borderRadius: 14,
     padding: 12,
     marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.1)",
   },
   songImagePlaceholder: {
-    width: 48,
-    height: 48,
-    borderRadius: 8,
-    backgroundColor: "rgba(255, 107, 53, 0.1)",
+    width: 56,
+    height: 56,
+    borderRadius: 10,
+    backgroundColor: "rgba(255, 107, 53, 0.15)",
     justifyContent: "center",
     alignItems: "center",
-    marginRight: 12,
+    marginRight: 14,
     overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "rgba(255, 107, 53, 0.3)",
   },
   songImage: {
     width: "100%",
@@ -350,78 +483,88 @@ const styles = StyleSheet.create({
   },
   songInfo: {
     flex: 1,
+    justifyContent: "center",
   },
   songName: {
     fontSize: 16,
-    fontWeight: "600",
+    fontWeight: "700",
     color: "#FFFFFF",
     marginBottom: 4,
   },
   songArtist: {
     fontSize: 14,
     color: "#888888",
+    marginBottom: 2,
   },
-  emptyText: {
-    color: "#888888",
-    textAlign: "center",
-    marginTop: 10,
-    fontStyle: "italic",
+  songGenre: {
+    fontSize: 12,
+    color: "#FF6B35",
+    fontWeight: "500",
   },
+  playButtonContainer: {
+    marginLeft: 8,
+  },
+
+  /** ---------------- Challenge Cards ---------------- **/
   challengeCard: {
     marginBottom: 20,
+    borderRadius: 16,
+    backgroundColor: "rgba(255, 255, 255, 0.05)",
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.1)",
   },
   challengeImage: {
-    height: 150,
+    height: 180,
     justifyContent: "flex-end",
-    marginBottom: 8,
   },
   challengeOverlay: {
-    backgroundColor: "rgba(0,0,0,0.6)",
-    padding: 10,
-    borderBottomLeftRadius: 12,
-    borderBottomRightRadius: 12,
+    backgroundColor: "rgba(0, 0, 0, 0.7)",
+    padding: 16,
+  },
+  challengeHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   challengeTitle: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "bold",
+    color: "#FFFFFF",
+    fontSize: 20,
+    fontWeight: "700",
+    flex: 1,
+  },
+  participantsContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(255, 107, 53, 0.2)",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 12,
+    gap: 4,
   },
   challengeParticipants: {
     color: "#FF6B35",
-    fontSize: 12,
-    marginTop: 2,
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  challengeFooter: {
+    padding: 16,
   },
   challengeDescription: {
-    color: "#ccc",
+    color: "#CCCCCC",
     fontSize: 14,
+    marginBottom: 12,
+    lineHeight: 20,
   },
-
-  /** ---------------- Buttons ---------------- **/
-  buttonRow: {
+  joinButtonContainer: {
     flexDirection: "row",
-    marginTop: 20,
-    gap: 10,
+    alignItems: "center",
+    gap: 6,
   },
-  button: {
-    backgroundColor: "#fff",
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 8,
-  },
-  buttonText: {
-    fontWeight: "bold",
-    color: "#000",
-  },
-  buttonOutline: {
-    borderWidth: 1,
-    borderColor: "#fff",
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 8,
-  },
-  buttonTextOutline: {
-    color: "#fff",
-    fontWeight: "bold",
+  joinButtonText: {
+    color: "#FF6B35",
+    fontSize: 14,
+    fontWeight: "700",
   },
 });
 
