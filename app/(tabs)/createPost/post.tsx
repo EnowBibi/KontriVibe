@@ -262,7 +262,7 @@ const PostScreen = () => {
       formData.append("visibility", visibility);
       formData.append("relatedChallengeId", selectedChallenge?._id || "");
       formData.append("relatedSongId", selectedSong?._id || "");
-      formData.append("aiGenerated", 'false');
+      formData.append("aiGenerated", "false");
 
       if (mediaUri) {
         const filename =
@@ -287,7 +287,7 @@ const PostScreen = () => {
         // @ts-ignore
         console.log(
           "[PostScreen] FormData parts:",
-      //    JSON.stringify(formData._parts, null, 2)
+         // JSON.stringify(formData._parts, null, 2)
         );
       }
 
